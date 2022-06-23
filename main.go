@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 const (
 	imgWidth  = 256
@@ -18,6 +21,7 @@ func main() {
 	)
 
 	for j := imgHeight; j >= 0; j-- {
+		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
 		for i := 0; i < imgWidth; i++ {
 			r = float32(i) / (imgWidth - 1)
 			g = float32(j) / (imgHeight - 1)
@@ -30,4 +34,5 @@ func main() {
 			fmt.Println(ir, ig, ib)
 		}
 	}
+	fmt.Fprintln(os.Stderr, "\nDone.")
 }
