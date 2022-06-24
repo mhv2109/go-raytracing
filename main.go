@@ -16,22 +16,19 @@ func main() {
 	fmt.Println("255")
 
 	var (
-		r, g, b    float32
-		ir, ig, ib int
+		r, g, b float64
+		c       Color
 	)
 
 	for j := imgHeight; j >= 0; j-- {
 		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
 		for i := 0; i < imgWidth; i++ {
-			r = float32(i) / (imgWidth - 1)
-			g = float32(j) / (imgHeight - 1)
+			r = float64(i) / (imgWidth - 1)
+			g = float64(j) / (imgHeight - 1)
 			b = 0.25
+			c = Color{r, g, b}
 
-			ir = int(255.999 * r)
-			ig = int(255.999 * g)
-			ib = int(255.99 * b)
-
-			fmt.Println(ir, ig, ib)
+			WriteColor(os.Stdout, c)
 		}
 	}
 	fmt.Fprintln(os.Stderr, "\nDone.")
