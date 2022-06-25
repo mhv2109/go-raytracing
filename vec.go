@@ -69,7 +69,7 @@ func (v Vec3) mul(o Vec3) Vec3 {
 func (v Vec3) DivS(t float64, others ...float64) (res Vec3) {
 	res = v.divS(t)
 	for _, o := range others {
-		res.divS(o)
+		res = res.divS(o)
 	}
 	return
 }
