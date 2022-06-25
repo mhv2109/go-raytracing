@@ -29,10 +29,10 @@ var (
 // RayColor calculates the background color along a Ray
 func RayColor(r Ray) Color {
 	var (
-		dir Color   = r.Dir.Unit()
-		a   Color   = Color{1, 1, 1}
-		b   Color   = Color{0.5, 0.7, 1.0}
-		t   float64 = 0.5 * (dir.Y + 1.0)
+		dir = r.Dir.Unit()
+		a   = Color{1, 1, 1}
+		b   = Color{0.5, 0.7, 1.0}
+		t   = 0.5 * (dir.Y + 1.0)
 	)
 	return a.MulS(1 - t).Add(b.MulS(t))
 }
@@ -46,10 +46,10 @@ func main() {
 		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
 		for i := 0; i < imgWidth; i++ {
 			var (
-				u float64 = float64(i) / (imgWidth - 1)
-				v float64 = float64(j) / (imgHeight - 1)
-				r Ray     = Ray{origin, lowerLeftCorner.Add(horiz.MulS(u), vert.MulS(v), origin.Neg())}
-				c Color   = RayColor(r)
+				u = float64(i) / (imgWidth - 1)
+				v = float64(j) / (imgHeight - 1)
+				r = Ray{origin, lowerLeftCorner.Add(horiz.MulS(u), vert.MulS(v), origin.Neg())}
+				c = RayColor(r)
 			)
 			WriteColor(os.Stdout, c)
 		}
