@@ -6,28 +6,51 @@ import (
 )
 
 const (
-	imgWidth  = 256
-	imgHeight = 256
+	ratio = 16.0 / 9.0
+
+	// Image
+	imgWidth  = 400
+	imgHeight = imgWidth / ratio
+
+	// Camera
+	viewHeight = 2.0
+	viewWidth  = ratio * viewHeight
+	focalLen   = 1.0
 )
+
+var (
+	// Camera
+	origin          = Point3{0, 0, 0}
+	horiz           = Point3{viewWidth, 0, 0}
+	vert            = Point3{0, viewHeight, 0}
+	lowerLeftCorner = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
+)
+
+// RayColor calculates the background color along a Ray
+func RayColor(r Ray) Color {
+	var (
+		dir Color   = r.Dir.Unit()
+		a   Color   = Color{1, 1, 1}
+		b   Color   = Color{0.5, 0.7, 1.0}
+		t   float64 = 0.5 * (dir.Y + 1.0)
+	)
+	return a.MulS(1 - t).Add(b.MulS(t))
+}
 
 func main() {
 	fmt.Println("P3")
 	fmt.Println(imgWidth, imgHeight)
 	fmt.Println("255")
 
-	var (
-		r, g, b float64
-		c       Color
-	)
-
 	for j := imgHeight; j >= 0; j-- {
 		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
 		for i := 0; i < imgWidth; i++ {
-			r = float64(i) / (imgWidth - 1)
-			g = float64(j) / (imgHeight - 1)
-			b = 0.25
-			c = Color{r, g, b}
-
+			var (
+				u float64 = float64(i) / (imgWidth - 1)
+				v float64 = float64(j) / (imgHeight - 1)
+				r Ray     = Ray{origin, lowerLeftCorner.Add(horiz.MulS(u), vert.MulS(v), origin.Neg())}
+				c Color   = RayColor(r)
+			)
 			WriteColor(os.Stdout, c)
 		}
 	}
