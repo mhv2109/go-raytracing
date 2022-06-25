@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func WriteColor(w io.Writer, c Color) {
+func writeColor(w io.Writer, c Color) {
 	var r, g, b int
 
 	// scale float values [0, 1] to [0, 255]

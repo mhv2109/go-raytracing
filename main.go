@@ -30,8 +30,16 @@ var (
 	lowerLeftCorner = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
 )
 
-// RayColor calculates the background color along a Ray.
-func RayColor(r Ray) Color {
+// rayColor calculates the Color along the Ray. We define objects + colors here,
+// and return an object's color if the Ray intersects it. Otherwise, we return
+// the background color
+func rayColor(r Ray) Color {
+	// objects in the scene
+	if hitSphere(Point3{0, 0, -1}, 0.5, r) { // sphere in center of image, with a radius of 0.5
+		return Color{1, 0, 0}
+	}
+
+	// background
 	var (
 		dir = r.Dir.Unit()
 		a   = Color{1, 1, 1}       // white
@@ -39,6 +47,19 @@ func RayColor(r Ray) Color {
 		t   = 0.5 * (dir.Y + 1.0)
 	)
 	return a.MulS(1 - t).Add(b.MulS(t)) // (1-t)*white + t*blue
+}
+
+func hitSphere(center Vec3, radius float64, r Ray) bool {
+	var (
+		oc = r.Orig.Sub(center)
+
+		a = r.Dir.Dot(r.Dir)
+		b = 2.0 * oc.Dot(r.Dir)
+		c = oc.Dot(oc) - radius*radius
+
+		discriminant = b*b - 4*a*c
+	)
+	return discriminant > 0
 }
 
 func main() {
@@ -64,9 +85,9 @@ func main() {
 			u = float64(i) / (imgWidth - 1)
 			v = float64(j) / (imgHeight - 1)
 			r = Ray{origin, lowerLeftCorner.Add(horiz.MulS(u), vert.MulS(v), origin.Neg())}
-			c = RayColor(r)
+			c = rayColor(r)
 
-			WriteColor(os.Stdout, c)
+			writeColor(os.Stdout, c)
 		}
 	}
 	fmt.Fprintln(os.Stderr, "\nDone.")
