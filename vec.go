@@ -30,6 +30,18 @@ func (v Vec3) add(o Vec3) Vec3 {
 	return Vec3{v.X + o.X, v.Y + o.Y, v.Z + o.Z}
 }
 
+func (v Vec3) AddS(t float64, others ...float64) (res Vec3) {
+	res = v.addS(t)
+	for _, o := range others {
+		res = res.addS(o)
+	}
+	return
+}
+
+func (v Vec3) addS(t float64) Vec3 {
+	return v.Add(Vec3{t, t, t})
+}
+
 func (v Vec3) Sub(o Vec3, others ...Vec3) (res Vec3) {
 	res = v.sub(o)
 	for _, o := range others {
@@ -42,6 +54,18 @@ func (v Vec3) sub(o Vec3) Vec3 {
 	return v.add(o.Neg())
 }
 
+func (v Vec3) SubS(t float64, others ...float64) (res Vec3) {
+	res = v.subS(t)
+	for _, o := range others {
+		res = res.subS(o)
+	}
+	return
+}
+
+func (v Vec3) subS(t float64) Vec3 {
+	return v.AddS(-t)
+}
+
 func (v Vec3) MulS(t float64, others ...float64) (res Vec3) {
 	res = v.mulS(t)
 	for _, o := range others {
@@ -51,7 +75,7 @@ func (v Vec3) MulS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) mulS(t float64) Vec3 {
-	return Vec3{v.X * t, v.Y * t, v.Z * t}
+	return v.Mul(Vec3{t, t, t})
 }
 
 func (v Vec3) Mul(o Vec3, others ...Vec3) (res Vec3) {
@@ -87,7 +111,7 @@ func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
 }
 
 func (v Vec3) div(o Vec3) Vec3 {
-	return Vec3{v.X / o.X, v.Y / o.Y, v.Z / o.Z}
+	return v.Mul(Vec3{1 / o.X, 1 / o.Y, 1 / o.Z})
 }
 
 func (v Vec3) Len() float64 {
@@ -95,7 +119,11 @@ func (v Vec3) Len() float64 {
 }
 
 func (v Vec3) LenSq() float64 {
-	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+	return v.Sq().Sum()
+}
+
+func (v Vec3) Sq() Vec3 {
+	return v.Mul(Vec3{v.X, v.Y, v.Z})
 }
 
 func (v Vec3) Dot(o Vec3) float64 {
