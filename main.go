@@ -56,23 +56,24 @@ func rayColor(r Ray) Color {
 // intersect point of the sphere, or -1.0 otherwise.
 func hitSphere(center Vec3, radius float64, r Ray) float64 {
 	// A ray intersects the sphere if there exists two solutions for the quadratic
-	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*b.
-	// We can determine this by calulating the descriminant d.
+	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*halfb.
+	// We can determine this by calulating the descriminant d. This has been
+	// simplified using the method in section 6.2.
 	var (
 		oc = r.Orig.Sub(center) // A - C
 
-		a = r.Dir.Dot(r.Dir)           // b dot b
-		b = 2.0 * oc.Dot(r.Dir)        // 2 * (b dot (A - C))
-		c = oc.Dot(oc) - radius*radius // (A - C) dot (A - C) - r^2
+		a     = r.Dir.LenSq()
+		halfb = oc.Dot(r.Dir)
+		c     = oc.LenSq() - radius*radius
 
-		d = b*b - 4*a*c // discriminant
+		d = halfb*halfb - a*c
 	)
 	if d < 0 {
 		// no real solutions if d < 0
 		return -1
 	}
 	// at least 1 solution if d > 0
-	return (-b - math.Sqrt(d)) / (2.0 * a)
+	return (-halfb - math.Sqrt(d)) / a
 }
 
 func main() {
