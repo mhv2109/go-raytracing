@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 )
 
@@ -35,8 +36,9 @@ var (
 // the background color
 func rayColor(r Ray) Color {
 	// objects in the scene
-	if hitSphere(Point3{0, 0, -1}, 0.5, r) { // sphere in center of image, with a radius of 0.5
-		return Color{1, 0, 0}
+	if t := hitSphere(Point3{0, 0, -1}, 0.5, r); t > 0 { // sphere in center of image, with a radius of 0.5
+		N := r.At(t).Sub(Point3{0, 0, -1}).Unit()
+		return Color{N.X + 1, N.Y + 1, N.Z + 1}.MulS(0.5)
 	}
 
 	// background
@@ -50,8 +52,9 @@ func rayColor(r Ray) Color {
 }
 
 // hitSphere checks if r intersects with a spere defined by the center and
-// radius.
-func hitSphere(center Vec3, radius float64, r Ray) bool {
+// radius. If so, it returns the value of t with (first, camera-facing)
+// intersect point of the sphere, or -1.0 otherwise.
+func hitSphere(center Vec3, radius float64, r Ray) float64 {
 	// A ray intersects the sphere if there exists two solutions for the quadratic
 	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*b.
 	// We can determine this by calulating the descriminant d.
@@ -64,7 +67,12 @@ func hitSphere(center Vec3, radius float64, r Ray) bool {
 
 		d = b*b - 4*a*c // discriminant
 	)
-	return d > 0 // two solutions exists iff d > 0
+	if d < 0 {
+		// no real solutions if d < 0
+		return -1
+	}
+	// at least 1 solution if d > 0
+	return (-b - math.Sqrt(d)) / (2.0 * a)
 }
 
 func main() {
