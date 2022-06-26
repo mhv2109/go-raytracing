@@ -12,6 +12,18 @@ type HitRecord struct {
 
 	// Parameter t of impact
 	T float64
+
+	// "front" facing?
+	F bool
+}
+
+func (h *HitRecord) setFaceNormal(r Ray, n Vec3) {
+	h.F = r.Dir.Dot(n) < 0
+	if h.F {
+		h.N = n
+	} else {
+		h.N = n.Neg()
+	}
 }
 
 type Hittable interface {
@@ -61,6 +73,9 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
 		T = root
 		P = r.At(T)
 		N = P.Sub(s.Center).DivS(s.R)
+
+		hr = HitRecord{P: P, T: T}
 	)
-	return &HitRecord{P, N, T}
+	hr.setFaceNormal(r, N)
+	return &hr
 }
