@@ -29,6 +29,14 @@ var (
 	horiz           = Point3{viewWidth, 0, 0}
 	vert            = Point3{0, viewHeight, 0}
 	lowerLeftCorner = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
+
+	// objects in the scene
+
+	// sphere in center of image, with a radius of 0.5
+	s = Sphere{
+		Point3{0, 0, -1},
+		0.5,
+	}
 )
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
@@ -36,8 +44,8 @@ var (
 // the background color
 func rayColor(r Ray) Color {
 	// objects in the scene
-	if t := hitSphere(Point3{0, 0, -1}, 0.5, r); t > 0 { // sphere in center of image, with a radius of 0.5
-		N := r.At(t).Sub(Point3{0, 0, -1}).Unit()
+	if hr := s.Hit(r, 0, math.MaxFloat64); hr != nil {
+		N := hr.N
 		return Color{N.X + 1, N.Y + 1, N.Z + 1}.MulS(0.5)
 	}
 
@@ -49,31 +57,6 @@ func rayColor(r Ray) Color {
 		t   = 0.5 * (dir.Y + 1.0)
 	)
 	return a.MulS(1 - t).Add(b.MulS(t)) // (1-t)*white + t*blue
-}
-
-// hitSphere checks if r intersects with a spere defined by the center and
-// radius. If so, it returns the value of t with (first, camera-facing)
-// intersect point of the sphere, or -1.0 otherwise.
-func hitSphere(center Vec3, radius float64, r Ray) float64 {
-	// A ray intersects the sphere if there exists two solutions for the quadratic
-	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*halfb.
-	// We can determine this by calulating the descriminant d. This has been
-	// simplified using the method in section 6.2.
-	var (
-		oc = r.Orig.Sub(center) // A - C
-
-		a     = r.Dir.LenSq()
-		halfb = oc.Dot(r.Dir)
-		c     = oc.LenSq() - radius*radius
-
-		d = halfb*halfb - a*c
-	)
-	if d < 0 {
-		// no real solutions if d < 0
-		return -1
-	}
-	// at least 1 solution if d > 0
-	return (-halfb - math.Sqrt(d)) / a
 }
 
 func main() {
