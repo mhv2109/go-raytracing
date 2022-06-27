@@ -7,29 +7,14 @@ import (
 )
 
 const (
-	// Aspect ratio for Image and Camera
-	ratio = 16.0 / 9.0
-
 	// Image
 	// This affects the _output_, like the final resolution. Higher values here
 	// don't affect the picture _content_, rather the final _quality_.
 	imgWidth  = 400
 	imgHeight = imgWidth / ratio
-
-	// Camera
-	// This affects the _screen_, like focal length and field of view.
-	viewHeight = 2.0
-	viewWidth  = ratio * viewHeight
-	focalLen   = 1.0
 )
 
 var (
-	// Camera
-	origin          = Point3{0, 0, 0}
-	horiz           = Point3{viewWidth, 0, 0}
-	vert            = Point3{0, viewHeight, 0}
-	lowerLeftCorner = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
-
 	// objects in the scene
 	world = NewHittables(
 		Sphere{Point3{0, 0, -1}, 0.5},      // sphere in center of image, with a radius of 0.5
@@ -64,6 +49,8 @@ func main() {
 	var (
 		u, v float64
 
+		cam = NewCamera(Point3{0, 0, 0})
+
 		// Ray extrapolates the _sceen_ (see "Camera" above) from the
 		// cartesian coordinate of each pixel from the output file (see
 		// "Image" above).
@@ -78,7 +65,7 @@ func main() {
 		for i := 0; i < imgWidth; i++ {
 			u = float64(i) / (imgWidth - 1)
 			v = float64(j) / (imgHeight - 1)
-			r = Ray{origin, lowerLeftCorner.Add(horiz.MulS(u), vert.MulS(v), origin.Neg())}
+			r = cam.Ray(u, v)
 			c = rayColor(r)
 
 			writeColor(os.Stdout, c)
