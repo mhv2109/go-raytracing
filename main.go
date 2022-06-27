@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 )
 
@@ -12,6 +13,7 @@ const (
 	// don't affect the picture _content_, rather the final _quality_.
 	imgWidth  = 400
 	imgHeight = imgWidth / ratio
+	samples   = 100
 )
 
 var (
@@ -63,12 +65,15 @@ func main() {
 	for j := imgHeight; j >= 0; j-- {
 		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
 		for i := 0; i < imgWidth; i++ {
-			u = float64(i) / (imgWidth - 1)
-			v = float64(j) / (imgHeight - 1)
-			r = cam.Ray(u, v)
-			c = rayColor(r)
-
-			writeColor(os.Stdout, c)
+			pixel := Color{0, 0, 0}
+			for s := 0; s < samples; s++ {
+				u = (float64(i) + rand.Float64()) / (imgWidth - 1)
+				v = (float64(j) + rand.Float64()) / (imgHeight - 1)
+				r = cam.Ray(u, v)
+				c = rayColor(r)
+				pixel = pixel.Add(c)
+			}
+			writeColor(os.Stdout, pixel, samples)
 		}
 	}
 	fmt.Fprintln(os.Stderr, "\nDone.")
