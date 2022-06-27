@@ -31,12 +31,10 @@ var (
 	lowerLeftCorner = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
 
 	// objects in the scene
-
-	// sphere in center of image, with a radius of 0.5
-	s = Sphere{
-		Point3{0, 0, -1},
-		0.5,
-	}
+	world = NewHittables(
+		Sphere{Point3{0, 0, -1}, 0.5},      // sphere in center of image, with a radius of 0.5
+		Sphere{Point3{0, -100.5, -1}, 100}, // ground
+	)
 )
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
@@ -44,12 +42,11 @@ var (
 // the background color
 func rayColor(r Ray) Color {
 	// objects in the scene
-	if hr := s.Hit(r, 0, math.MaxFloat64); hr != nil {
-		N := hr.N
-		return Color{N.X + 1, N.Y + 1, N.Z + 1}.MulS(0.5)
+	if hr := world.Hit(r, 0, math.MaxFloat64); hr != nil {
+		return hr.N.Add(Color{1, 1, 1}).MulS(0.5)
 	}
 
-	// background
+	// if no object hit, render background
 	var (
 		dir = r.Dir.Unit()
 		a   = Color{1, 1, 1}       // white

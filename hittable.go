@@ -79,3 +79,40 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
 	hr.setFaceNormal(r, N)
 	return &hr
 }
+
+type Hittables struct {
+	Objects []Hittable
+}
+
+func NewHittables(objects ...Hittable) Hittables {
+	o := make([]Hittable, 0)
+	h := Hittables{o}
+	if len(objects) > 0 {
+		h.Add(objects...)
+	}
+	return h
+}
+
+func (h *Hittables) Add(objects ...Hittable) {
+	h.Objects = append(h.Objects, objects...)
+}
+
+func (h *Hittables) Clear() {
+	h.Objects = make([]Hittable, 0)
+}
+
+func (h *Hittables) Hit(r Ray, tmin, tmax float64) *HitRecord {
+	var (
+		hr      *HitRecord
+		closest = tmax
+	)
+
+	for _, object := range h.Objects {
+		if temp := object.Hit(r, tmin, closest); temp != nil {
+			closest = temp.T
+			hr = temp
+		}
+	}
+
+	return hr
+}
