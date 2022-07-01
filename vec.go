@@ -152,11 +152,15 @@ func RandomVec3(min, max float64) Vec3 {
 	return Vec3{f(), f(), f()}
 }
 
-func RandomVec3UnitSphere() Vec3 {
+func RandomVec3InUnitSphere() Vec3 {
 	for {
 		p := RandomVec3(-1, 1)
 		if p.LenSq() < 1 {
 			return p
 		}
 	}
+}
+
+func RandomUnitVec3() Vec3 {
+	return RandomVec3InUnitSphere().Unit()
 }

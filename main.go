@@ -52,7 +52,7 @@ LOOP:
 	}
 
 	// objects in the scene
-	target := hr.P.Add(hr.N).Add(RandomVec3UnitSphere())
+	target := hr.P.Add(hr.N).Add(RandomUnitVec3())
 	r = Ray{hr.P, target.Sub(hr.P)}
 	mult = mult.MulS(0.5)
 	n++
