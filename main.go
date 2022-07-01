@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math"
 	"math/rand"
@@ -17,12 +18,20 @@ const (
 )
 
 var (
+	// cmdline args
+	simpleDiff bool
+
 	// objects in the scene
 	world = NewHittables(
 		Sphere{Point3{0, 0, -1}, 0.5},      // sphere in center of image, with a radius of 0.5
 		Sphere{Point3{0, -100.5, -1}, 100}, // ground
 	)
 )
+
+func init() {
+	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
+	flag.Parse()
+}
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
 // and return an object's color if the Ray intersects it. Otherwise, we return
@@ -52,12 +61,32 @@ LOOP:
 	}
 
 	// objects in the scene
-	target := hr.P.Add(hr.N).Add(RandomUnitVec3())
+	target := hr.P.Add(hr.N).Add(diffuse(hr))
 	r = Ray{hr.P, target.Sub(hr.P)}
 	mult = mult.MulS(0.5)
 	n++
 
 	goto LOOP // recursive version causes stack overflow
+}
+
+func diffuse(r *HitRecord) Vec3 {
+	// TODO: add simple diffuse
+	if simpleDiff {
+		simpleDiffuse(r.N)
+	}
+	return lambertian()
+}
+
+func simpleDiffuse(normal Vec3) Vec3 {
+	r := RandomVec3InUnitSphere()
+	if r.Dot(normal) < 0 {
+		r = r.Neg()
+	}
+	return r
+}
+
+func lambertian() Vec3 {
+	return RandomUnitVec3()
 }
 
 func main() {
