@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"math"
 )
 
 func writeColor(w io.Writer, c Color, samples int) {
@@ -10,9 +11,9 @@ func writeColor(w io.Writer, c Color, samples int) {
 	// to [0, 255]
 	var (
 		scale = 1.0 / float64(samples)
-		r     = int(256 * clamp(c.X*scale, 0.0, 0.999))
-		g     = int(256 * clamp(c.Y*scale, 0.0, 0.999))
-		b     = int(256 * clamp(c.Z*scale, 0.0, 0.999))
+		r     = int(256 * clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
+		g     = int(256 * clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
+		b     = int(256 * clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
 	)
 	fmt.Fprintln(w, r, g, b)
 }
