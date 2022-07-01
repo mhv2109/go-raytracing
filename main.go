@@ -40,7 +40,7 @@ LOOP:
 	}
 
 	hr = nil
-	if hr = world.Hit(r, 0, math.MaxFloat64); hr == nil {
+	if hr = world.Hit(r, 1e-3, math.MaxFloat64); hr == nil {
 		// if no object hit, render background
 		var (
 			dir = r.Dir.Unit()
