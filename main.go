@@ -12,7 +12,7 @@ const (
 	// This affects the _output_, like the final resolution. Higher values here
 	// don't affect the picture _content_, rather the final _quality_.
 	imgWidth  = 400
-	imgHeight = imgWidth / ratio
+	imgHeight = int(imgWidth / ratio)
 	samples   = 100
 )
 
@@ -28,19 +28,36 @@ var (
 // and return an object's color if the Ray intersects it. Otherwise, we return
 // the background color
 func rayColor(r Ray) Color {
-	// objects in the scene
-	if hr := world.Hit(r, 0, math.MaxFloat64); hr != nil {
-		return hr.N.Add(Color{1, 1, 1}).MulS(0.5)
+	var (
+		mult = Vec3{1, 1, 1}
+		hr   *HitRecord
+		n    = 0
+	)
+
+LOOP:
+	if n > 50 {
+		return Color{0, 0, 0}
 	}
 
-	// if no object hit, render background
-	var (
-		dir = r.Dir.Unit()
-		a   = Color{1, 1, 1}       // white
-		b   = Color{0.5, 0.7, 1.0} // blue
-		t   = 0.5 * (dir.Y + 1.0)
-	)
-	return a.MulS(1 - t).Add(b.MulS(t)) // (1-t)*white + t*blue
+	hr = nil
+	if hr = world.Hit(r, 0, math.MaxFloat64); hr == nil {
+		// if no object hit, render background
+		var (
+			dir = r.Dir.Unit()
+			a   = Color{1, 1, 1}       // white
+			b   = Color{0.5, 0.7, 1.0} // blue
+			t   = 0.5 * (dir.Y + 1.0)
+		)
+		return a.MulS(1 - t).Add(b.MulS(t)).Mul(mult) // (1-t)*white + t*blue
+	}
+
+	// objects in the scene
+	target := hr.P.Add(hr.N).Add(RandomVec3UnitSphere())
+	r = Ray{hr.P, target.Sub(hr.P)}
+	mult = mult.MulS(0.5)
+	n++
+
+	goto LOOP // recursive version causes stack overflow
 }
 
 func main() {
@@ -68,7 +85,7 @@ func main() {
 			pixel := Color{0, 0, 0}
 			for s := 0; s < samples; s++ {
 				u = (float64(i) + rand.Float64()) / (imgWidth - 1)
-				v = (float64(j) + rand.Float64()) / (imgHeight - 1)
+				v = (float64(j) + rand.Float64()) / (float64(imgHeight) - 1)
 				r = cam.Ray(u, v)
 				c = rayColor(r)
 				pixel = pixel.Add(c)
