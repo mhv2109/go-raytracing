@@ -20,23 +20,16 @@ const (
 var (
 	// cmdline args
 	simpleDiff bool
-
-	// objects in the scene
-	world = NewHittables(
-		Sphere{Point3{0, 0, -1}, 0.5},      // sphere in center of image, with a radius of 0.5
-		Sphere{Point3{0, -100.5, -1}, 100}, // ground
-	)
 )
 
 func init() {
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
-	flag.Parse()
 }
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
 // and return an object's color if the Ray intersects it. Otherwise, we return
 // the background color
-func rayColor(r Ray) Color {
+func rayColor(r Ray, world Hittables) Color {
 	var (
 		mult = Vec3{1, 1, 1}
 		hr   *HitRecord
@@ -61,35 +54,48 @@ LOOP:
 	}
 
 	// objects in the scene
-	target := hr.P.Add(hr.N).Add(diffuse(hr))
-	r = Ray{hr.P, target.Sub(hr.P)}
-	mult = mult.MulS(0.5)
-	n++
+	att, scatt := hr.M.Scatter(r, *hr)
+	if att == nil || scatt == nil {
+		return Color{0, 0, 0}
+	}
+	r = *scatt
+	mult = mult.Mul(*att)
 
+	n++
 	goto LOOP // recursive version causes stack overflow
 }
 
-func diffuse(r *HitRecord) Vec3 {
-	// TODO: add simple diffuse
+// diffustionMaterial allows us to select the diffusion function at runtime
+func diffusionMaterial() MaterialType {
 	if simpleDiff {
-		return simpleDiffuse(r.N)
+		return SimpleDiffusion
 	}
-	return lambertian()
-}
-
-func simpleDiffuse(normal Vec3) Vec3 {
-	r := RandomVec3InUnitSphere()
-	if r.Dot(normal) < 0 {
-		r = r.Neg()
-	}
-	return r
-}
-
-func lambertian() Vec3 {
-	return RandomUnitVec3()
+	return Lambertian
 }
 
 func main() {
+	flag.Parse()
+
+	// build world
+
+	var (
+		// materials + surfaces
+		ground = NewMaterial(Color{0.8, 0.8, 0}, diffusionMaterial())
+		center = NewMaterial(Color{0.7, 0.3, 0.3}, diffusionMaterial())
+		left   = NewMaterial(Color{0.8, 0.8, 0.8}, Metal)
+		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal)
+
+		// objects in the scene
+		world = NewHittables(
+			Sphere{Point3{0, -100.5, -1}, 100, ground}, // ground
+			Sphere{Point3{0, 0, -1}, 0.5, center},      // sphere in center of image, with a radius of 0.5
+			Sphere{Point3{-1, 0, -1}, 0.5, left},
+			Sphere{Point3{1, 0, -1}, 0.5, right},
+		)
+	)
+
+	// output image
+
 	fmt.Println("P3")
 	fmt.Println(imgWidth, imgHeight)
 	fmt.Println("255")
@@ -116,7 +122,7 @@ func main() {
 				u = (float64(i) + rand.Float64()) / (imgWidth - 1)
 				v = (float64(j) + rand.Float64()) / (float64(imgHeight) - 1)
 				r = cam.Ray(u, v)
-				c = rayColor(r)
+				c = rayColor(r, world)
 				pixel = pixel.Add(c)
 			}
 			writeColor(os.Stdout, pixel, samples)

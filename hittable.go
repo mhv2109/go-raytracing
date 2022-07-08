@@ -15,6 +15,9 @@ type HitRecord struct {
 
 	// "front" facing?
 	F bool
+
+	// Material of impacted object
+	M Material
 }
 
 func (h *HitRecord) setFaceNormal(r Ray, n Vec3) {
@@ -35,6 +38,7 @@ type Hittable interface {
 type Sphere struct {
 	Center Point3
 	R      float64
+	M      Material
 }
 
 func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
@@ -74,7 +78,7 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
 		P = r.At(T)
 		N = P.Sub(s.Center).DivS(s.R)
 
-		hr = HitRecord{P: P, T: T}
+		hr = HitRecord{P: P, T: T, M: s.M}
 	)
 	hr.setFaceNormal(r, N)
 	return &hr

@@ -13,6 +13,10 @@ type Vec3 struct {
 	X, Y, Z float64
 }
 
+func (v Vec3) Abs() Vec3 {
+	return Vec3{math.Abs(v.X), math.Abs(v.Y), math.Abs(v.Z)}
+}
+
 func (v Vec3) Sum() float64 {
 	return v.X + v.Y + v.Z
 }
@@ -143,6 +147,12 @@ func (v Vec3) Cross(o Vec3) Vec3 {
 
 func (v Vec3) Unit() Vec3 {
 	return v.DivS(v.Len())
+}
+
+func (v Vec3) NearZero() bool {
+	const s = 1e-8
+	v = v.Abs()
+	return v.X < s && v.Y < s && v.Z < s
 }
 
 func RandomVec3(min, max float64) Vec3 {
