@@ -82,8 +82,8 @@ func main() {
 		// materials + surfaces
 		ground = NewMaterial(Color{0.8, 0.8, 0}, diffusionMaterial())
 		center = NewMaterial(Color{0.7, 0.3, 0.3}, diffusionMaterial())
-		left   = NewMaterial(Color{0.8, 0.8, 0.8}, Metal)
-		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal)
+		left   = NewMaterial(Color{0.8, 0.8, 0.8}, Metal, MetalFuzz(0.3))
+		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal, MetalFuzz(1.0))
 
 		// objects in the scene
 		world = NewHittables(

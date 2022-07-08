@@ -2,12 +2,14 @@ package main
 
 type MaterialType int
 
+// Material describes object + ray interactions. See ch 9.
 type Material interface {
 	Scatter(Ray, HitRecord) (*Color, *Ray)
 }
 
 type material struct {
 	mt     MaterialType
+	fuzz   float64
 	albedo Color
 }
 
@@ -18,22 +20,36 @@ const (
 	Metal
 )
 
-func NewMaterial(albedo Color, mt MaterialType) Material {
-	return material{mt, albedo}
+type MaterialOpt func(*material)
+
+// MetalFuzz applies randomness to reflection of rays from Metal objects.
+// See 9.6.
+func MetalFuzz(fuzz float64) MaterialOpt {
+	return func(m *material) {
+		m.fuzz = fuzz
+	}
+}
+
+func NewMaterial(albedo Color, mt MaterialType, opts ...MaterialOpt) Material {
+	m := material{mt, 0, albedo}
+	for _, opt := range opts {
+		opt(&m)
+	}
+	return m
 }
 
 func (m material) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 	switch m.mt {
-	case Lambertian, SimpleDiffusion:
+	case Lambertian, SimpleDiffusion: // see 9.3
 		dir := hr.N.Add(diffuse(m.mt, hr))
 		if dir.NearZero() {
 			dir = hr.N
 		}
 		scatt = &Ray{hr.P, dir}
 		att = &m.albedo
-	case Metal:
+	case Metal: // see 9.4
 		reflected := reflect(r.Dir.Unit(), hr.N)
-		s := Ray{hr.P, reflected}
+		s := Ray{hr.P, reflected.Add(RandomVec3InUnitSphere().MulS(m.fuzz))} // fuzziness introduced in 9.6
 		a := m.albedo
 		if s.Dir.Dot(hr.N) > 0 {
 			scatt = &s
