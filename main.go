@@ -72,7 +72,7 @@ LOOP:
 func diffuse(r *HitRecord) Vec3 {
 	// TODO: add simple diffuse
 	if simpleDiff {
-		simpleDiffuse(r.N)
+		return simpleDiffuse(r.N)
 	}
 	return lambertian()
 }
