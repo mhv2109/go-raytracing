@@ -81,8 +81,8 @@ func main() {
 	var (
 		// materials + surfaces
 		ground = NewMaterial(Color{0.8, 0.8, 0}, diffusionMaterial())
-		center = NewMaterial(Color{0.7, 0.3, 0.3}, diffusionMaterial())
-		left   = NewMaterial(Color{0.8, 0.8, 0.8}, Metal, MetalFuzz(0.3))
+		center = NewMaterial(Color{1.0, 1.0, 1.0}, Dielectric, DielectricIndexOfRefraction(1.5))
+		left   = NewMaterial(Color{1.0, 1.0, 1.0}, Dielectric, DielectricIndexOfRefraction(1.5))
 		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal, MetalFuzz(1.0))
 
 		// objects in the scene

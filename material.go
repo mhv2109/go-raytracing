@@ -1,5 +1,7 @@
 package main
 
+import "math"
+
 type MaterialType int
 
 // Material describes object + ray interactions. See ch 9.
@@ -8,9 +10,9 @@ type Material interface {
 }
 
 type material struct {
-	mt     MaterialType
-	fuzz   float64
-	albedo Color
+	mt       MaterialType
+	fuzz, ir float64
+	albedo   Color
 }
 
 const (
@@ -18,6 +20,7 @@ const (
 	Lambertian MaterialType = iota
 	SimpleDiffusion
 	Metal
+	Dielectric
 )
 
 type MaterialOpt func(*material)
@@ -30,8 +33,16 @@ func MetalFuzz(fuzz float64) MaterialOpt {
 	}
 }
 
+// DielectricIndexOfRefraction defines the refractive index (eta prime) in Snell's
+// Law equation. See 10.2.
+func DielectricIndexOfRefraction(ir float64) MaterialOpt {
+	return func(m *material) {
+		m.ir = ir
+	}
+}
+
 func NewMaterial(albedo Color, mt MaterialType, opts ...MaterialOpt) Material {
-	m := material{mt, 0, albedo}
+	m := material{mt: mt, albedo: albedo}
 	for _, opt := range opts {
 		opt(&m)
 	}
@@ -55,6 +66,17 @@ func (m material) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 			scatt = &s
 			att = &a
 		}
+	case Dielectric:
+		att = &m.albedo
+		var ratio float64
+		if hr.F {
+			ratio = 1.0 / m.ir
+		} else {
+			ratio = m.ir
+		}
+		udir := r.Dir.Unit()
+		refr := refract(udir, hr.N, ratio)
+		scatt = &Ray{hr.P, refr}
 	default:
 		panic("unexpected MaterialType")
 	}
@@ -79,4 +101,13 @@ func diffuse(mt MaterialType, hr HitRecord) (vec Vec3) {
 
 func reflect(v, n Vec3) Vec3 {
 	return v.Sub(n.MulS(2).MulS(v.Dot(n)))
+}
+
+func refract(uv, n Vec3, eta float64) Vec3 {
+	var (
+		cosTheta = math.Min(uv.Neg().Dot(n), 1.0)
+		perp     = n.MulS(cosTheta).Add(uv).MulS(eta)
+		par      = n.MulS(-math.Sqrt(math.Abs(1 - perp.LenSq())))
+	)
+	return perp.Add(par)
 }
