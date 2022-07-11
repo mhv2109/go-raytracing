@@ -81,9 +81,9 @@ func main() {
 	var (
 		// materials + surfaces
 		ground = NewMaterial(Color{0.8, 0.8, 0}, diffusionMaterial())
-		center = NewMaterial(Color{1.0, 1.0, 1.0}, Dielectric, DielectricIndexOfRefraction(1.5))
+		center = NewMaterial(Color{0.1, 0.2, 0.5}, diffusionMaterial())
 		left   = NewMaterial(Color{1.0, 1.0, 1.0}, Dielectric, DielectricIndexOfRefraction(1.5))
-		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal, MetalFuzz(1.0))
+		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal, MetalFuzz(0.0))
 
 		// objects in the scene
 		world = NewHittables(

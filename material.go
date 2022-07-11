@@ -68,15 +68,28 @@ func (m material) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 		}
 	case Dielectric:
 		att = &m.albedo
+
 		var ratio float64
 		if hr.F {
 			ratio = 1.0 / m.ir
 		} else {
 			ratio = m.ir
 		}
+
 		udir := r.Dir.Unit()
-		refr := refract(udir, hr.N, ratio)
-		scatt = &Ray{hr.P, refr}
+		cosT := math.Min(udir.Neg().Dot(hr.N), 1)
+		sinT := math.Sqrt(1 - cosT*cosT)
+
+		var dir Vec3
+		if ratio*sinT > 1 {
+			// cannot refract
+			dir = reflect(udir, hr.N)
+		} else {
+			// can refract
+			dir = refract(udir, hr.N, ratio)
+		}
+
+		scatt = &Ray{hr.P, dir}
 	default:
 		panic("unexpected MaterialType")
 	}
