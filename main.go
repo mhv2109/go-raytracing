@@ -66,11 +66,11 @@ LOOP:
 }
 
 // diffustionMaterial allows us to select the diffusion function at runtime
-func diffusionMaterial() MaterialType {
+func diffusionMaterial() DiffusionOpt {
 	if simpleDiff {
-		return SimpleDiffusion
+		return WithDiffusionType(SimpleDiffusion)
 	}
-	return Lambertian
+	return WithDiffusionType(Lambertian)
 }
 
 func main() {
@@ -80,10 +80,10 @@ func main() {
 
 	var (
 		// materials + surfaces
-		ground = NewMaterial(Color{0.8, 0.8, 0}, diffusionMaterial())
-		center = NewMaterial(Color{0.1, 0.2, 0.5}, diffusionMaterial())
-		left   = NewMaterial(Color{1.0, 1.0, 1.0}, Dielectric, DielectricIndexOfRefraction(1.5))
-		right  = NewMaterial(Color{0.8, 0.6, 0.2}, Metal, MetalFuzz(0.0))
+		ground = NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial())
+		center = NewDiffusion(Color{0.1, 0.2, 0.5}, diffusionMaterial())
+		left   = NewDielectric(Color{1.0, 1.0, 1.0}, IndexOfRefraction(1.5))
+		right  = NewMetal(Color{0.8, 0.6, 0.2}, Fuzz(0.0))
 
 		// objects in the scene
 		world = NewHittables(
