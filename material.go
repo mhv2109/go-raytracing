@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type MaterialType int
 
@@ -81,7 +84,7 @@ func (m material) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 		sinT := math.Sqrt(1 - cosT*cosT)
 
 		var dir Vec3
-		if ratio*sinT > 1 {
+		if ratio*sinT > 1 || m.dielectricReflectance(cosT, ratio) > rand.Float64() {
 			// cannot refract
 			dir = reflect(udir, hr.N)
 		} else {
@@ -93,6 +96,14 @@ func (m material) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 	default:
 		panic("unexpected MaterialType")
 	}
+	return
+}
+
+// dielectricReflectance implements Schlick's approximation for reflectance. See 10.4.
+func (m material) dielectricReflectance(cos, ratio float64) (refl float64) {
+	r0 := (1 - ratio) / (1 + ratio)
+	r0 = r0 * r0
+	refl = r0 + (1-r0)*math.Pow((1-cos), 5)
 	return
 }
 
