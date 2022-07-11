@@ -90,6 +90,7 @@ func main() {
 			Sphere{Point3{0, -100.5, -1}, 100, ground}, // ground
 			Sphere{Point3{0, 0, -1}, 0.5, center},      // sphere in center of image, with a radius of 0.5
 			Sphere{Point3{-1, 0, -1}, 0.5, left},
+			Sphere{Point3{-1, 0, -1}, -0.4, left}, // hollow sphere. See 10.5
 			Sphere{Point3{1, 0, -1}, 0.5, right},
 		)
 	)
