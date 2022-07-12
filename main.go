@@ -104,7 +104,7 @@ func main() {
 	var (
 		u, v float64
 
-		cam = NewCamera(Point3{0, 0, 0})
+		cam = NewCamera(Point3{0, 0, 0}, 90)
 
 		// Ray extrapolates the _sceen_ (see "Camera" above) from the
 		// cartesian coordinate of each pixel from the output file (see

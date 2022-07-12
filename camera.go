@@ -1,15 +1,14 @@
 package main
 
+import "math"
+
 // static values for Camera instances
 const (
 	// Aspect ratio
 	ratio = 16.0 / 9.0
 
-	// Focal length and field of view
-	// Since these are "static" values, you can think of this as a "prime" lens attached to each Camera instance
-	viewHeight = 2.0
-	viewWidth  = ratio * viewHeight
-	focalLen   = 1.0
+	// Focal length
+	focalLen = 1.0
 )
 
 type Camera struct {
@@ -17,8 +16,14 @@ type Camera struct {
 	horiz, vert             Vec3
 }
 
-func NewCamera(origin Point3) Camera {
+func NewCamera(origin Point3, vfov float64) Camera {
 	var (
+		// field of view
+		theta      = vfov * (math.Pi / 180.0)
+		h          = math.Tan(theta / 2)
+		viewHeight = 2.0 * h
+		viewWidth  = ratio * viewHeight
+
 		horiz = Vec3{viewWidth, 0, 0}
 		vert  = Vec3{0, viewHeight, 0}
 		llc   = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
