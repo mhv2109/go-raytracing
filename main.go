@@ -126,7 +126,13 @@ func main() {
 	var (
 		u, v float64
 
-		cam = NewCamera(Point3{-2, 2, 1}, Point3{0, 0, -1}, Vec3{0, 1, 0}, 20)
+		lookfrom  = Point3{3, 3, 2}
+		lookat    = Point3{0, 0, -1}
+		vup       = Vec3{0, 1, 0}
+		vfov      = 20.0
+		aperture  = 2.0
+		focusDist = lookfrom.Sub(lookat).Len()
+		cam       = NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
 
 		// Ray extrapolates the _sceen_ (see "Camera" above) from the
 		// cartesian coordinate of each pixel from the output file (see
