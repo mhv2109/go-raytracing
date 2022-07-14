@@ -13,9 +13,9 @@ const (
 	// Image
 	// This affects the _output_, like the final resolution. Higher values here
 	// don't affect the picture _content_, rather the final _quality_.
-	imgWidth  = 400
+	imgWidth  = 2560
 	imgHeight = int(imgWidth / ratio)
-	samples   = 100
+	samples   = 500
 )
 
 var (
@@ -33,6 +33,56 @@ func diffusionMaterial() DiffusionOpt {
 		return WithDiffusionType(SimpleDiffusion)
 	}
 	return WithDiffusionType(Lambertian)
+}
+
+func randomScene() Hittables {
+	var (
+		world  = NewHittables()
+		ground = NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial())
+	)
+
+	world.Add(Sphere{Point3{0, -1000, 0}, 1000, ground})
+
+	p := Point3{4, 0.2, 0}
+	for a := -11; a < 11; a++ {
+		for b := -11; b < 11; b++ {
+			center := Point3{float64(a) + 0.9*rand.Float64(), 0.2, float64(b) + 0.9*rand.Float64()}
+			if center.Sub(p).Len() > 0.9 {
+				var (
+					c Color
+					m Material
+				)
+
+				switch choose := rand.Float64(); {
+				case choose < 0.8:
+					// diffuse
+					c = RandomVec3(0, 1).Mul(RandomVec3(0, 1))
+					m = NewDiffusion(c, diffusionMaterial())
+				case choose < 0.95:
+					// metal
+					c = RandomVec3(0.5, 1)
+					fuzz := rand.Float64() * 0.5
+					m = NewMetal(c, Fuzz(fuzz))
+				default:
+					// glass
+					m = NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5))
+				}
+
+				world.Add(Sphere{center, 0.2, m})
+			}
+		}
+	}
+
+	material1 := NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5))
+	world.Add(Sphere{Point3{0, 1, 0}, 1, material1})
+
+	material2 := NewDiffusion(Color{0.4, 0.2, 0.1}, diffusionMaterial())
+	world.Add(Sphere{Point3{-4, 1, 0}, 1, material2})
+
+	material3 := NewMetal(Color{0.7, 0.6, 0.5}, Fuzz(0))
+	world.Add(Sphere{Point3{4, 1, 0}, 1, material3})
+
+	return world
 }
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
@@ -99,23 +149,7 @@ func main() {
 	flag.Parse()
 
 	// build world
-
-	var (
-		// materials + surfaces
-		ground = NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial())
-		center = NewDiffusion(Color{0.1, 0.2, 0.5}, diffusionMaterial())
-		left   = NewDielectric(Color{1.0, 1.0, 1.0}, IndexOfRefraction(1.5))
-		right  = NewMetal(Color{0.8, 0.6, 0.2}, Fuzz(0.0))
-
-		// objects in the scene
-		world = NewHittables(
-			Sphere{Point3{0, -100.5, -1}, 100, ground}, // ground
-			Sphere{Point3{0, 0, -1}, 0.5, center},      // sphere in center of image, with a radius of 0.5
-			Sphere{Point3{-1, 0, -1}, 0.5, left},
-			Sphere{Point3{-1, 0, -1}, -0.4, left}, // hollow sphere. See 10.5
-			Sphere{Point3{1, 0, -1}, 0.5, right},
-		)
-	)
+	world := randomScene()
 
 	// output image
 
@@ -126,12 +160,12 @@ func main() {
 	var (
 		u, v float64
 
-		lookfrom  = Point3{3, 3, 2}
-		lookat    = Point3{0, 0, -1}
+		lookfrom  = Point3{13, 2, 3}
+		lookat    = Point3{0, 0, -0}
 		vup       = Vec3{0, 1, 0}
 		vfov      = 20.0
-		aperture  = 2.0
-		focusDist = lookfrom.Sub(lookat).Len()
+		aperture  = 0.1
+		focusDist = 10.0
 		cam       = NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
 
 		// Ray extrapolates the _sceen_ (see "Camera" above) from the
