@@ -10,6 +10,29 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}"
+        },
+        {
+            "name": "Lambertian Diffusion",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                ">",
+                "lambertian.ppm"
+            ]
+        },
+        {
+            "name": "Simple Diffusion",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-simple",
+                ">",
+                "lambertian.ppm"
+            ]
         }
     ]
 }

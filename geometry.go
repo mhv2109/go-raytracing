@@ -141,7 +141,7 @@ func (v Vec3) Cross(o Vec3) Vec3 {
 	return Vec3{
 		v.Y*o.Z - v.Z*o.Y,
 		v.Z*o.X - v.X*o.Z,
-		v.X*o.Y - v.Y*o.Z,
+		v.X*o.Y - v.Y*o.X,
 	}
 }
 
@@ -173,4 +173,12 @@ func RandomVec3InUnitSphere() Vec3 {
 
 func RandomUnitVec3() Vec3 {
 	return RandomVec3InUnitSphere().Unit()
+}
+
+type Ray struct {
+	Orig, Dir Vec3 // A, b
+}
+
+func (r Ray) At(t float64) Vec3 {
+	return r.Orig.Add(r.Dir.MulS(t)) // (A + t*b)
 }
