@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"os"
@@ -24,6 +25,14 @@ var (
 
 func init() {
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
+}
+
+// diffustionMaterial allows us to select the diffusion function at runtime
+func diffusionMaterial() DiffusionOpt {
+	if simpleDiff {
+		return WithDiffusionType(SimpleDiffusion)
+	}
+	return WithDiffusionType(Lambertian)
 }
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
@@ -65,12 +74,25 @@ LOOP:
 	goto LOOP // recursive version causes stack overflow
 }
 
-// diffustionMaterial allows us to select the diffusion function at runtime
-func diffusionMaterial() DiffusionOpt {
-	if simpleDiff {
-		return WithDiffusionType(SimpleDiffusion)
+func writeColor(w io.Writer, c Color, samples int) {
+	// Divide the color by the number of samples and scale float values [0, 1]
+	// to [0, 255]
+	var (
+		scale = 1.0 / float64(samples)
+		r     = int(256 * clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
+		g     = int(256 * clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
+		b     = int(256 * clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
+	)
+	fmt.Fprintln(w, r, g, b)
+}
+
+func clamp(x, min, max float64) float64 {
+	if x < min {
+		return min
+	} else if x > max {
+		return max
 	}
-	return WithDiffusionType(Lambertian)
+	return x
 }
 
 func main() {
@@ -104,7 +126,7 @@ func main() {
 	var (
 		u, v float64
 
-		cam = NewCamera(Point3{0, 0, 0}, 90)
+		cam = NewCamera(Point3{-2, 2, 1}, Point3{0, 0, -1}, Vec3{0, 1, 0}, 20)
 
 		// Ray extrapolates the _sceen_ (see "Camera" above) from the
 		// cartesian coordinate of each pixel from the output file (see

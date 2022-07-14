@@ -16,7 +16,7 @@ type Camera struct {
 	horiz, vert             Vec3
 }
 
-func NewCamera(origin Point3, vfov float64) Camera {
+func NewCamera(lookfrom, lookat Point3, vup Vec3, vfov float64) Camera {
 	var (
 		// field of view
 		theta      = vfov * (math.Pi / 180.0)
@@ -24,13 +24,19 @@ func NewCamera(origin Point3, vfov float64) Camera {
 		viewHeight = 2.0 * h
 		viewWidth  = ratio * viewHeight
 
-		horiz = Vec3{viewWidth, 0, 0}
-		vert  = Vec3{0, viewHeight, 0}
-		llc   = origin.Sub(horiz.DivS(2), vert.DivS(2), Point3{0, 0, focalLen})
+		// orientation
+		w = lookfrom.Sub(lookat).Unit()
+		u = vup.Cross(w).Unit()
+		v = w.Cross(u)
+
+		origin = lookfrom
+		horiz  = u.MulS(viewWidth)
+		vert   = v.MulS(viewHeight)
+		llc    = origin.Sub(horiz.DivS(2), vert.DivS(2), w)
 	)
 	return Camera{origin, llc, horiz, vert}
 }
 
-func (c Camera) Ray(u, v float64) Ray {
-	return Ray{c.origin, c.lowerLeftCorner.Add(c.horiz.MulS(u), c.vert.MulS(v), c.origin.Neg())}
+func (c Camera) Ray(s, t float64) Ray {
+	return Ray{c.origin, c.lowerLeftCorner.Add(c.horiz.MulS(s), c.vert.MulS(t)).Sub(c.origin)}
 }
