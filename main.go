@@ -7,6 +7,8 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
+	"sync"
 )
 
 const (
@@ -145,6 +147,58 @@ func clamp(x, min, max float64) float64 {
 	return x
 }
 
+func process(cam Camera, world Hittables) {
+	// Pan across each pixel of the output image and calculate the color of each.
+	var (
+		wg      sync.WaitGroup
+		results = make(chan chan Color, 2*runtime.NumCPU())
+	)
+
+	wg.Add(1)
+	go func() {
+		for j := imgHeight; j >= 0; j-- {
+			for i := 0; i < imgWidth; i++ {
+				// calculate each ray concurrently
+				ch := make(chan Color, 1)
+				results <- ch
+
+				go func(j, i int, ch chan Color) {
+					var (
+						u, v  float64
+						pixel = Color{0, 0, 0}
+						r     Ray
+						c     Color
+					)
+
+					for s := 0; s < samples; s++ {
+						u = (float64(i) + rand.Float64()) / (imgWidth - 1)
+						v = (float64(j) + rand.Float64()) / (float64(imgHeight) - 1)
+						r = cam.Ray(u, v)
+						c = rayColor(r, world)
+						pixel = pixel.Add(c)
+					}
+
+					ch <- pixel
+					close(ch)
+				}(j, i, ch)
+			}
+		}
+		close(results)
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for ch := range results {
+			pixel := <-ch
+			writeColor(os.Stdout, pixel, samples)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
+}
+
 func main() {
 	flag.Parse()
 
@@ -158,8 +212,6 @@ func main() {
 	fmt.Println("255")
 
 	var (
-		u, v float64
-
 		lookfrom  = Point3{13, 2, 3}
 		lookat    = Point3{0, 0, -0}
 		vup       = Vec3{0, 1, 0}
@@ -167,29 +219,7 @@ func main() {
 		aperture  = 0.1
 		focusDist = 10.0
 		cam       = NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
-
-		// Ray extrapolates the _sceen_ (see "Camera" above) from the
-		// cartesian coordinate of each pixel from the output file (see
-		// "Image" above).
-		r Ray
-
-		c Color
 	)
 
-	// Pan across each pixel of the output image and calculate the color of each.
-	for j := imgHeight; j >= 0; j-- {
-		fmt.Fprint(os.Stderr, "\rScanlines remaining:", j)
-		for i := 0; i < imgWidth; i++ {
-			pixel := Color{0, 0, 0}
-			for s := 0; s < samples; s++ {
-				u = (float64(i) + rand.Float64()) / (imgWidth - 1)
-				v = (float64(j) + rand.Float64()) / (float64(imgHeight) - 1)
-				r = cam.Ray(u, v)
-				c = rayColor(r, world)
-				pixel = pixel.Add(c)
-			}
-			writeColor(os.Stdout, pixel, samples)
-		}
-	}
-	fmt.Fprintln(os.Stderr, "\nDone.")
+	process(cam, world)
 }
