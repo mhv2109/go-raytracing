@@ -147,7 +147,11 @@ func clamp(x, min, max float64) float64 {
 	return x
 }
 
-func process(cam Camera, world Hittables) {
+func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
+	fmt.Fprintln(writer, "P3")
+	fmt.Fprintln(writer, w, h)
+	fmt.Fprintln(writer, "255")
+
 	// Pan across each pixel of the output image and calculate the color of each.
 	var (
 		wg      sync.WaitGroup
@@ -156,8 +160,8 @@ func process(cam Camera, world Hittables) {
 
 	wg.Add(1)
 	go func() {
-		for j := imgHeight; j >= 0; j-- {
-			for i := 0; i < imgWidth; i++ {
+		for j := w; j >= 0; j-- {
+			for i := 0; i < h; i++ {
 				// calculate each ray concurrently
 				ch := make(chan Color, 1)
 				results <- ch
@@ -170,9 +174,9 @@ func process(cam Camera, world Hittables) {
 						c     Color
 					)
 
-					for s := 0; s < samples; s++ {
-						u = (float64(i) + rand.Float64()) / (imgWidth - 1)
-						v = (float64(j) + rand.Float64()) / (float64(imgHeight) - 1)
+					for s := 0; s < ns; s++ {
+						u = (float64(i) + rand.Float64()) / (float64(w) - 1)
+						v = (float64(j) + rand.Float64()) / (float64(h) - 1)
 						r = cam.Ray(u, v)
 						c = rayColor(r, world)
 						pixel = pixel.Add(c)
@@ -191,7 +195,7 @@ func process(cam Camera, world Hittables) {
 	go func() {
 		for ch := range results {
 			pixel := <-ch
-			writeColor(os.Stdout, pixel, samples)
+			writeColor(writer, pixel, ns)
 		}
 		wg.Done()
 	}()
@@ -199,18 +203,7 @@ func process(cam Camera, world Hittables) {
 	wg.Wait()
 }
 
-func main() {
-	flag.Parse()
-
-	// build world
-	world := randomScene()
-
-	// output image
-
-	fmt.Println("P3")
-	fmt.Println(imgWidth, imgHeight)
-	fmt.Println("255")
-
+func newCamera() Camera {
 	var (
 		lookfrom  = Point3{13, 2, 3}
 		lookat    = Point3{0, 0, -0}
@@ -218,8 +211,17 @@ func main() {
 		vfov      = 20.0
 		aperture  = 0.1
 		focusDist = 10.0
-		cam       = NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
 	)
+	return NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
+}
 
-	process(cam, world)
+func main() {
+	flag.Parse()
+
+	world := randomScene()
+	cam := newCamera()
+
+	// output image
+
+	process(cam, world, imgWidth, imgHeight, samples, os.Stdout)
 }
