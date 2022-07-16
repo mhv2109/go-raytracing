@@ -156,7 +156,13 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 	var (
 		wg      sync.WaitGroup
 		results = make(chan chan Color, 2*runtime.NumCPU())
+		rands   = make([]float64, 2*ns)
 	)
+
+	// calculate random values up-front
+	for i := range rands {
+		rands[i] = rand.Float64()
+	}
 
 	wg.Add(1)
 	go func() {
@@ -166,7 +172,7 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 				ch := make(chan Color, 1)
 				results <- ch
 
-				go func(j, i int, ch chan Color) {
+				go func(j, i int) {
 					var (
 						u, v  float64
 						pixel = Color{0, 0, 0}
@@ -174,9 +180,9 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 						c     Color
 					)
 
-					for s := 0; s < ns; s++ {
-						u = (float64(i) + rand.Float64()) / (float64(w) - 1)
-						v = (float64(j) + rand.Float64()) / (float64(h) - 1)
+					for s := 0; s < 2*ns; s += 2 {
+						u = (float64(i) + rands[s]) / (float64(w) - 1)
+						v = (float64(j) + rands[s+1]) / (float64(h) - 1)
 						r = cam.Ray(u, v)
 						c = rayColor(r, world)
 						pixel = pixel.Add(c)
@@ -184,7 +190,7 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 
 					ch <- pixel
 					close(ch)
-				}(j, i, ch)
+				}(j, i)
 			}
 		}
 		close(results)
