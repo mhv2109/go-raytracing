@@ -160,8 +160,8 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 
 	wg.Add(1)
 	go func() {
-		for j := w; j >= 0; j-- {
-			for i := 0; i < h; i++ {
+		for j := h; j >= 0; j-- {
+			for i := 0; i < w; i++ {
 				// calculate each ray concurrently
 				ch := make(chan Color, 1)
 				results <- ch
