@@ -13,7 +13,7 @@ var (
 
 // Material describes object + ray interactions. See ch 9.
 type Material interface {
-	Scatter(Ray, HitRecord) (*Color, *Ray)
+	Scatter(Ray, HitRecord, *Color, *Ray) bool
 }
 
 type material struct {
@@ -44,13 +44,14 @@ func NewMetal(albedo Color, opts ...MetalOpt) Metal {
 }
 
 // Scatter - see 9.4.
-func (m Metal) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
+func (m Metal) Scatter(r Ray, hr HitRecord, att *Color, scatt *Ray) (ok bool) {
 	reflected := reflect(r.Dir.Unit(), hr.N)
 	s := Ray{hr.P, reflected.Add(RandomVec3InUnitSphere().MulS(m.fuzz))} // fuzziness introduced in 9.6
 	a := m.m.albedo
 	if s.Dir.Dot(hr.N) > 0 {
-		scatt = &s
-		att = &a
+		*scatt = s
+		*att = a
+		ok = true
 	}
 	return
 }
@@ -78,8 +79,8 @@ func NewDielectric(albedo Color, opts ...DielectricOpt) Dielectric {
 	return d
 }
 
-func (d Dielectric) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
-	att = &d.m.albedo
+func (d Dielectric) Scatter(r Ray, hr HitRecord, att *Color, scatt *Ray) (ok bool) {
+	*att = d.m.albedo
 
 	var ratio float64
 	if hr.F {
@@ -101,7 +102,8 @@ func (d Dielectric) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
 		dir = refract(udir, hr.N, ratio)
 	}
 
-	scatt = &Ray{hr.P, dir}
+	*scatt = Ray{hr.P, dir}
+	ok = true
 	return
 }
 
@@ -142,13 +144,14 @@ func NewDiffusion(albedo Color, opts ...DiffusionOpt) Diffusion {
 }
 
 // Scatter - see 9.3.
-func (d Diffusion) Scatter(r Ray, hr HitRecord) (att *Color, scatt *Ray) {
+func (d Diffusion) Scatter(r Ray, hr HitRecord, att *Color, scatt *Ray) (ok bool) {
 	dir := hr.N.Add(d.diffuse(hr))
 	if dir.NearZero() {
 		dir = hr.N
 	}
-	scatt = &Ray{hr.P, dir}
-	att = &d.m.albedo
+	*scatt = Ray{hr.P, dir}
+	*att = d.m.albedo
+	ok = true
 	return
 }
 

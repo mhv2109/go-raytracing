@@ -92,9 +92,11 @@ func randomScene() Hittables {
 // the background color
 func rayColor(r Ray, world Hittables) Color {
 	var (
-		mult = Vec3{1, 1, 1}
-		hr   *HitRecord
-		n    = 0
+		mult  = Vec3{1, 1, 1}
+		hr    HitRecord
+		n     = 0
+		att   Color
+		scatt Ray
 	)
 
 LOOP:
@@ -102,8 +104,7 @@ LOOP:
 		return Color{0, 0, 0}
 	}
 
-	hr = nil
-	if hr = world.Hit(r, 1e-3, math.MaxFloat64); hr == nil {
+	if !world.Hit(r, 1e-3, math.MaxFloat64, &hr) {
 		// if no object hit, render background
 		var (
 			dir = r.Dir.Unit()
@@ -115,12 +116,11 @@ LOOP:
 	}
 
 	// objects in the scene
-	att, scatt := hr.M.Scatter(r, *hr)
-	if att == nil || scatt == nil {
+	if !hr.M.Scatter(r, hr, &att, &scatt) {
 		return Color{0, 0, 0}
 	}
-	r = *scatt
-	mult = mult.Mul(*att)
+	r = scatt
+	mult = mult.Mul(att)
 
 	n++
 	goto LOOP // recursive version causes stack overflow

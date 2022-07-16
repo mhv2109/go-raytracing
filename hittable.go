@@ -20,18 +20,20 @@ type HitRecord struct {
 	M Material
 }
 
-func (h *HitRecord) setFaceNormal(r Ray, n Vec3) {
-	h.F = r.Dir.Dot(n) < 0
-	if h.F {
-		h.N = n
-	} else {
-		h.N = n.Neg()
+func NewHitRecord(P Point3, N Vec3, T float64, M Material, r Ray) HitRecord {
+	hr := HitRecord{P: P, N: N, T: T, F: false, M: M}
+
+	hr.F = r.Dir.Dot(N) < 0
+	if !hr.F {
+		hr.N = hr.N.Neg()
 	}
+
+	return hr
 }
 
 type Hittable interface {
 	// Hit checks if r interesects with Hittable. If so, it returns a HitRecord, nil otherwise.
-	Hit(r Ray, tmin, tmax float64) *HitRecord
+	Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool
 }
 
 // Sphere is a shape defined by a Center point and a radius.
@@ -41,7 +43,7 @@ type Sphere struct {
 	M      Material
 }
 
-func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
+func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 	// A ray intersects the sphere if there exists two solutions for the quadratic
 	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*halfb.
 	// We can determine this by calulating the descriminant d. This has been
@@ -57,7 +59,7 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
 	)
 
 	if d < 0 {
-		return nil
+		return false
 	}
 
 	// Find the nearest root that lies in the acceptable range.
@@ -69,19 +71,18 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64) *HitRecord {
 	if root < tmin || tmax < root {
 		root = (-halfb + sqrtd) / a
 		if root < tmin || tmax < root {
-			return nil
+			return false
 		}
 	}
 
 	var (
-		T = root
-		P = r.At(T)
-		N = P.Sub(s.Center).DivS(s.R)
-
-		hr = HitRecord{P: P, T: T, M: s.M}
+		T    = root
+		P    = r.At(T)
+		N    = P.Sub(s.Center).DivS(s.R)
+		temp = NewHitRecord(P, N, T, s.M, r)
 	)
-	hr.setFaceNormal(r, N)
-	return &hr
+	*hr = temp
+	return true
 }
 
 type Hittables struct {
@@ -105,18 +106,18 @@ func (h *Hittables) Clear() {
 	h.Objects = make([]Hittable, 0)
 }
 
-func (h *Hittables) Hit(r Ray, tmin, tmax float64) *HitRecord {
+func (h *Hittables) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 	var (
-		hr      *HitRecord
+		hit     = false
 		closest = tmax
 	)
 
 	for _, object := range h.Objects {
-		if temp := object.Hit(r, tmin, closest); temp != nil {
-			closest = temp.T
-			hr = temp
+		if object.Hit(r, tmin, closest, hr) {
+			closest = hr.T
+			hit = true
 		}
 	}
 
-	return hr
+	return hit
 }
