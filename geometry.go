@@ -58,7 +58,7 @@ func (v Vec3) Sub(o Vec3, others ...Vec3) (res Vec3) {
 }
 
 func (v Vec3) sub(o Vec3) Vec3 {
-	return v.add(o.Neg())
+	return Vec3{v.X - o.X, v.Y - o.Y, v.Z - o.Z}
 }
 
 func (v Vec3) SubS(t float64, others ...float64) (res Vec3) {
@@ -82,7 +82,7 @@ func (v Vec3) MulS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) mulS(t float64) Vec3 {
-	return v.Mul(Vec3{t, t, t})
+	return Vec3{v.X * t, v.Y * t, v.Z * t}
 }
 
 func (v Vec3) Mul(o Vec3, others ...Vec3) (res Vec3) {
@@ -106,7 +106,7 @@ func (v Vec3) DivS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) divS(t float64) Vec3 {
-	return v.MulS(1 / t)
+	return Vec3{v.X / t, v.Y / t, v.Z / t}
 }
 
 func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
@@ -118,7 +118,7 @@ func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
 }
 
 func (v Vec3) div(o Vec3) Vec3 {
-	return v.Mul(Vec3{1 / o.X, 1 / o.Y, 1 / o.Z})
+	return Vec3{v.X / o.X, v.Y / o.Y, v.Z / o.Z}
 }
 
 func (v Vec3) Len() float64 {
@@ -130,7 +130,7 @@ func (v Vec3) LenSq() float64 {
 }
 
 func (v Vec3) Sq() Vec3 {
-	return v.Mul(Vec3{v.X, v.Y, v.Z})
+	return Vec3{v.X * v.X, v.Y * v.Y, v.Z * v.Z}
 }
 
 func (v Vec3) Dot(o Vec3) float64 {
