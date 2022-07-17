@@ -161,7 +161,7 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 
 	// calculate random values up-front
 	for i := range rands {
-		rands[i] = rand.Float64()
+		rands[i] = <-RandomCh
 	}
 
 	wg.Add(1)

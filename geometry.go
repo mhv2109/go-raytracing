@@ -2,7 +2,6 @@ package main
 
 import (
 	"math"
-	"math/rand"
 )
 
 // TODO: make Point3 and Color distinct types without redeclaring each method
@@ -157,7 +156,7 @@ func (v Vec3) NearZero() bool {
 
 func RandomVec3(min, max float64) Vec3 {
 	f := func() float64 {
-		return min + rand.Float64()*(max-min)
+		return min + <-RandomCh*(max-min)
 	}
 	return Vec3{f(), f(), f()}
 }
