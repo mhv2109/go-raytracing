@@ -4,10 +4,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"math/rand"
 	"os"
 	"runtime"
+	"runtime/pprof"
 	"sync"
 )
 
@@ -23,10 +25,12 @@ const (
 var (
 	// cmdline args
 	simpleDiff bool
+	cpuprofile string
 )
 
 func init() {
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "create a CPU profile and save to file")
 }
 
 // diffustionMaterial allows us to select the diffusion function at runtime
@@ -223,6 +227,18 @@ func newCamera() Camera {
 
 func main() {
 	flag.Parse()
+
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 
 	world := randomScene()
 	cam := newCamera()
