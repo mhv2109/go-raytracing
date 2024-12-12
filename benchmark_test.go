@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"runtime"
+	"testing"
+)
 
 type writer struct{}
 
@@ -8,19 +11,29 @@ func (w writer) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func BenchmarkProcess(b *testing.B) {
-	const (
-		w       = 400
-		h       = int(w / ratio)
-		samples = 10
-	)
+func newBenchmarkCamera() Camera {
+	return NewCamera(
+		256,
+		144,
+		100,
+		10,
+		2*runtime.NumCPU(),
+		Point3{13, 2, 3},
+		Point3{0, 0, 0},
+		Vec3{0, 1, 0},
+		20.0,
+		0.1,
+		10.0)
+}
+
+func BenchmarkRender(b *testing.B) {
 	var (
 		world      = randomScene()
-		cam        = newCamera()
+		cam        = newBenchmarkCamera()
 		mockWriter = writer{}
 	)
 
-	b.Run("process", func(b *testing.B) {
-		process(cam, world, w, h, samples, mockWriter)
+	b.Run("render", func(b *testing.B) {
+		cam.Render(world, mockWriter)
 	})
 }
