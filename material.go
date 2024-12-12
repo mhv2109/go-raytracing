@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"math/rand"
 )
 
 var (
@@ -93,7 +94,7 @@ func (d Dielectric) Scatter(r Ray, hr HitRecord, att *Color, scatt *Ray) (ok boo
 	sinT := math.Sqrt(1 - cosT*cosT)
 
 	var dir Vec3
-	if ratio*sinT > 1 || d.reflectance(cosT, ratio) > <-RandomCh {
+	if ratio*sinT > 1 || d.reflectance(cosT, ratio) > rand.Float64() {
 		// cannot refract
 		dir = reflect(udir, hr.N)
 	} else {

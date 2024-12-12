@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand"
 	"sync"
 )
 
@@ -118,13 +119,7 @@ func (cam Camera) Render(world Hittables, writer io.Writer) {
 	var (
 		wg      sync.WaitGroup
 		results = make(chan chan Color, cam.jobs)
-		rands   = make([]float64, 2*cam.samples)
 	)
-
-	// calculate random values up-front
-	for i := range rands {
-		rands[i] = <-RandomCh
-	}
 
 	wg.Add(1)
 	go func() {
@@ -142,9 +137,9 @@ func (cam Camera) Render(world Hittables, writer io.Writer) {
 						c     Color
 					)
 
-					for s := 0; s < 2*cam.samples; s += 2 {
-						u = (float64(i) + rands[s]) / (float64(cam.width) - 1)
-						v = (float64(j) + rands[s+1]) / (float64(cam.height) - 1)
+					for s := 0; s < cam.samples; s++ {
+						u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
+						v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
 						r = cam.ray(u, v)
 						c = cam.rayColor(r, world)
 						pixel = pixel.Add(c)
