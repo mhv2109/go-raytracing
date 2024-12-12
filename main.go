@@ -13,22 +13,21 @@ import (
 	"sync"
 )
 
-const (
-	// Image
-	// This affects the _output_, like the final resolution. Higher values here
-	// don't affect the picture _content_, rather the final _quality_.
-	imgWidth  = 2560
-	imgHeight = int(imgWidth / ratio)
-	samples   = 500
-)
-
 var (
 	// cmdline args
+	imgWidth   int
+	imgHeight  int
+	samples    int
+	jobs       int
 	simpleDiff bool
 	cpuprofile string
 )
 
 func init() {
+	flag.IntVar(&imgWidth, "width", 2560, "output image width")
+	flag.IntVar(&imgHeight, "height", 1440, "output image height")
+	flag.IntVar(&samples, "samples", 500, "number of samples per pixel")
+	flag.IntVar(&jobs, "jobs", 2*runtime.NumCPU(), "number of jobs for rendering")
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "create a CPU profile and save to file")
 }
@@ -159,7 +158,7 @@ func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
 	// Pan across each pixel of the output image and calculate the color of each.
 	var (
 		wg      sync.WaitGroup
-		results = make(chan chan Color, 2*runtime.NumCPU())
+		results = make(chan chan Color, jobs)
 		rands   = make([]float64, 2*ns)
 	)
 
@@ -222,7 +221,15 @@ func newCamera() Camera {
 		aperture  = 0.1
 		focusDist = 10.0
 	)
-	return NewCamera(lookfrom, lookat, vup, vfov, aperture, focusDist)
+	return NewCamera(
+		imgWidth,
+		imgHeight,
+		lookfrom,
+		lookat,
+		vup,
+		vfov,
+		aperture,
+		focusDist)
 }
 
 func main() {
