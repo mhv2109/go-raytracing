@@ -18,6 +18,7 @@ var (
 	imgWidth   int
 	imgHeight  int
 	samples    int
+	depth      int
 	jobs       int
 	simpleDiff bool
 	cpuprofile string
@@ -27,6 +28,7 @@ func init() {
 	flag.IntVar(&imgWidth, "width", 2560, "output image width")
 	flag.IntVar(&imgHeight, "height", 1440, "output image height")
 	flag.IntVar(&samples, "samples", 500, "number of samples per pixel")
+	flag.IntVar(&depth, "depth", 50, "number of ray bounces to calculate")
 	flag.IntVar(&jobs, "jobs", 2*runtime.NumCPU(), "number of jobs for rendering")
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "create a CPU profile and save to file")
@@ -126,7 +128,7 @@ func rayColor(r Ray, world Hittables) Color {
 	)
 
 LOOP:
-	if n > 50 {
+	if n > depth {
 		return Color{0, 0, 0}
 	}
 
