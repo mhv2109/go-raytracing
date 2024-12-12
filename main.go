@@ -48,7 +48,7 @@ func randomScene() Hittables {
 	ground := Sphere{
 		Point3{0, -1000, 0},
 		1000,
-		NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial()),
+		NewDiffusion(Color{0.5, 0.5, 0.5}, diffusionMaterial()),
 	}
 	world.Add(ground)
 
@@ -157,9 +157,9 @@ func writeColor(w io.Writer, c Color, samples int) {
 	// to [0, 255]
 	var (
 		scale = 1.0 / float64(samples)
-		r     = int(256 * clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
-		g     = int(256 * clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
-		b     = int(256 * clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
+		r     = int(255.999 * clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
+		g     = int(255.999 * clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
+		b     = int(255.999 * clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
 	)
 	fmt.Fprintln(w, r, g, b)
 }
