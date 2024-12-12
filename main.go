@@ -2,15 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"io"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"sync"
 )
 
 var (
@@ -115,128 +111,6 @@ func randomScene() Hittables {
 	return world
 }
 
-// rayColor calculates the Color along the Ray. We define objects + colors here,
-// and return an object's color if the Ray intersects it. Otherwise, we return
-// the background color
-func rayColor(r Ray, world Hittables) Color {
-	var (
-		mult  = Vec3{1, 1, 1}
-		hr    HitRecord
-		n     = 0
-		att   Color
-		scatt Ray
-	)
-
-LOOP:
-	if n > depth {
-		return Color{0, 0, 0}
-	}
-
-	if !world.Hit(r, 1e-3, math.MaxFloat64, &hr) {
-		// if no object hit, render background
-		var (
-			dir = r.Dir.Unit()
-			a   = Color{1, 1, 1}       // white
-			b   = Color{0.5, 0.7, 1.0} // blue
-			t   = 0.5 * (dir.Y + 1.0)
-		)
-		return a.MulS(1 - t).Add(b.MulS(t)).Mul(mult) // (1-t)*white + t*blue
-	}
-
-	// objects in the scene
-	if !hr.M.Scatter(r, hr, &att, &scatt) {
-		return Color{0, 0, 0}
-	}
-	r = scatt
-	mult = mult.Mul(att)
-
-	n++
-	goto LOOP // recursive version causes stack overflow
-}
-
-func writeColor(w io.Writer, c Color, samples int) {
-	// Divide the color by the number of samples and scale float values [0, 1]
-	// to [0, 255]
-	var (
-		scale = 1.0 / float64(samples)
-		r     = int(255.999 * clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
-		g     = int(255.999 * clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
-		b     = int(255.999 * clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
-	)
-	fmt.Fprintln(w, r, g, b)
-}
-
-func clamp(x, min, max float64) float64 {
-	if x < min {
-		return min
-	} else if x > max {
-		return max
-	}
-	return x
-}
-
-func process(cam Camera, world Hittables, w, h, ns int, writer io.Writer) {
-	fmt.Fprintln(writer, "P3")
-	fmt.Fprintln(writer, w, h)
-	fmt.Fprintln(writer, "255")
-
-	// Pan across each pixel of the output image and calculate the color of each.
-	var (
-		wg      sync.WaitGroup
-		results = make(chan chan Color, jobs)
-		rands   = make([]float64, 2*ns)
-	)
-
-	// calculate random values up-front
-	for i := range rands {
-		rands[i] = <-RandomCh
-	}
-
-	wg.Add(1)
-	go func() {
-		for j := h; j >= 0; j-- {
-			for i := 0; i < w; i++ {
-				// calculate each ray concurrently
-				ch := make(chan Color, 1)
-				results <- ch
-
-				go func(j, i int) {
-					var (
-						u, v  float64
-						pixel = Color{0, 0, 0}
-						r     Ray
-						c     Color
-					)
-
-					for s := 0; s < 2*ns; s += 2 {
-						u = (float64(i) + rands[s]) / (float64(w) - 1)
-						v = (float64(j) + rands[s+1]) / (float64(h) - 1)
-						r = cam.Ray(u, v)
-						c = rayColor(r, world)
-						pixel = pixel.Add(c)
-					}
-
-					ch <- pixel
-					close(ch)
-				}(j, i)
-			}
-		}
-		close(results)
-		wg.Done()
-	}()
-
-	wg.Add(1)
-	go func() {
-		for ch := range results {
-			pixel := <-ch
-			writeColor(writer, pixel, ns)
-		}
-		wg.Done()
-	}()
-
-	wg.Wait()
-}
-
 func newCamera() Camera {
 	var (
 		lookfrom  = Point3{13, 2, 3}
@@ -249,6 +123,9 @@ func newCamera() Camera {
 	return NewCamera(
 		imgWidth,
 		imgHeight,
+		samples,
+		depth,
+		jobs,
 		lookfrom,
 		lookat,
 		vup,
@@ -272,10 +149,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	world := randomScene()
-	cam := newCamera()
-
 	// output image
 
-	process(cam, world, imgWidth, imgHeight, samples, os.Stdout)
+	newCamera().Render(randomScene(), os.Stdout)
 }
