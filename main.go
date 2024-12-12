@@ -41,18 +41,49 @@ func diffusionMaterial() DiffusionOpt {
 }
 
 func randomScene() Hittables {
-	var (
-		world  = NewHittables()
-		ground = NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial())
-	)
+	world := NewHittables()
 
-	world.Add(Sphere{Point3{0, -1000, 0}, 1000, ground})
+	// earth/ground/floor
 
-	p := Point3{4, 0.2, 0}
+	ground := Sphere{
+		Point3{0, -1000, 0},
+		1000,
+		NewDiffusion(Color{0.8, 0.8, 0}, diffusionMaterial()),
+	}
+	world.Add(ground)
+
+	// big spheres in the center
+
+	sphere1 := Sphere{
+		Point3{0, 1, 0},
+		1,
+		NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5)),
+	}
+	world.Add(sphere1)
+
+	sphere2 := Sphere{
+		Point3{-4, 1, 0},
+		1,
+		NewDiffusion(Color{0.4, 0.2, 0.1}, diffusionMaterial()),
+	}
+	world.Add(sphere2)
+
+	sphere3 := Sphere{
+		Point3{4, 1, 0},
+		1,
+		NewMetal(Color{0.7, 0.6, 0.5}, Fuzz(0)),
+	}
+	world.Add(sphere3)
+
+	// add random little spheres all over the ground
+
 	for a := -11; a < 11; a++ {
 		for b := -11; b < 11; b++ {
-			center := Point3{float64(a) + 0.9*rand.Float64(), 0.2, float64(b) + 0.9*rand.Float64()}
-			if center.Sub(p).Len() > 0.9 {
+			center := Point3{float64(a) + 0.8*rand.Float64(), 0.2, float64(b) + 0.8*rand.Float64()}
+			if (center.Sub(sphere1.Center).Len() > 1.2) &&
+				(center.Sub(sphere2.Center).Len() > 1.2) &&
+				(center.Sub(sphere3.Center).Len() > 1.2) {
+
 				var (
 					c Color
 					m Material
@@ -70,22 +101,14 @@ func randomScene() Hittables {
 					m = NewMetal(c, Fuzz(fuzz))
 				default:
 					// glass
-					m = NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5))
+					c = Color{1, 1, 1}
+					m = NewDielectric(c, IndexOfRefraction(1.5))
 				}
 
 				world.Add(Sphere{center, 0.2, m})
 			}
 		}
 	}
-
-	material1 := NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5))
-	world.Add(Sphere{Point3{0, 1, 0}, 1, material1})
-
-	material2 := NewDiffusion(Color{0.4, 0.2, 0.1}, diffusionMaterial())
-	world.Add(Sphere{Point3{-4, 1, 0}, 1, material2})
-
-	material3 := NewMetal(Color{0.7, 0.6, 0.5}, Fuzz(0))
-	world.Add(Sphere{Point3{4, 1, 0}, 1, material3})
 
 	return world
 }
