@@ -21,6 +21,7 @@ var (
 	jobs       int
 	simpleDiff bool
 	cpuprofile string
+	outputFile string
 
 	// defaults
 	defaultWidth   = 2560
@@ -38,6 +39,7 @@ func init() {
 	flag.IntVar(&jobs, "jobs", 2*runtime.NumCPU(), "number of jobs for rendering")
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "create a CPU profile and save to file")
+	flag.StringVar(&outputFile, "output", "", "output file, defaults to stdout")
 }
 
 // diffustionMaterial allows us to select the diffusion function at runtime
@@ -147,6 +149,8 @@ func newCamera() Camera {
 func main() {
 	flag.Parse()
 
+	// configure profiling
+
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)
 		if err != nil {
@@ -159,17 +163,29 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// setup output
+
+	output := os.Stdout
+	if outputFile != "" {
+		var err error
+		output, err = os.Create(outputFile)
+		if err != nil {
+			log.Fatal("could not create output file: ", err)
+		}
+		defer output.Close()
+	}
+
 	// output image
 
 	cam := newCamera()
 
-	fmt.Println("P3")
-	fmt.Println(cam.ImageWidth(), cam.ImageHeight())
-	fmt.Println("255")
+	fmt.Fprintln(output, "P3")
+	fmt.Fprintln(output, cam.ImageWidth(), cam.ImageHeight())
+	fmt.Fprintln(output, "255")
 
 	bar := progressbar.Default(int64(cam.ImageSize()))
 	for pixel := range cam.Render(randomScene()) {
-		fmt.Println(pixel.R, pixel.G, pixel.B)
+		fmt.Fprintln(output, pixel.R, pixel.G, pixel.B)
 		bar.Add(1)
 	}
 }
