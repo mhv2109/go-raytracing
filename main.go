@@ -8,6 +8,8 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 var (
@@ -158,7 +160,9 @@ func main() {
 	fmt.Println(cam.ImageWidth(), cam.ImageHeight())
 	fmt.Println("255")
 
+	bar := progressbar.Default(int64(cam.ImageSize()))
 	for pixel := range cam.Render(randomScene()) {
 		fmt.Println(pixel.R, pixel.G, pixel.B)
+		bar.Add(1)
 	}
 }

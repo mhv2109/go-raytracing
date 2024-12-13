@@ -44,6 +44,10 @@ func (cam Camera) ImageHeight() int {
 	return cam.height
 }
 
+func (cam Camera) ImageSize() int {
+	return cam.ImageWidth() * cam.ImageHeight()
+}
+
 func (cam Camera) ray(s, t float64) Ray {
 	var (
 		rd     = RandomVec3InUnitSphere().MulS(cam.lensRadius)
