@@ -1,17 +1,16 @@
 package main
 
 import (
-	"runtime"
 	"testing"
 )
 
 func newBenchmarkCamera() Camera {
 	return NewCamera(
-		256,
-		144,
-		100,
-		10,
-		2*runtime.NumCPU(),
+		defaultWidth/10,
+		defaultHeight/10,
+		defaultSamples/10,
+		defaultDepth/10,
+		defaultJobs,
 		Point3{13, 2, 3},
 		Point3{0, 0, 0},
 		Vec3{0, 1, 0},

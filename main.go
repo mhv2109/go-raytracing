@@ -21,6 +21,13 @@ var (
 	jobs       int
 	simpleDiff bool
 	cpuprofile string
+
+	// defaults
+	defaultWidth   = 2560
+	defaultHeight  = 1440
+	defaultSamples = 500
+	defaultDepth   = 50
+	defaultJobs    = 16 * runtime.NumCPU() // determined by benchmarking
 )
 
 func init() {
