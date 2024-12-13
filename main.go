@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -151,5 +152,13 @@ func main() {
 
 	// output image
 
-	newCamera().Render(randomScene(), os.Stdout)
+	cam := newCamera()
+
+	fmt.Println("P3")
+	fmt.Println(cam.ImageWidth(), cam.ImageHeight())
+	fmt.Println("255")
+
+	for pixel := range cam.Render(randomScene()) {
+		fmt.Println(pixel.R, pixel.G, pixel.B)
+	}
 }

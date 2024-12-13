@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"math"
 	"math/rand"
-	"sync"
 )
 
 type Camera struct {
@@ -39,6 +36,14 @@ func NewCamera(width, height, samples, depth, jobs int, lookfrom, lookat Point3,
 	return Camera{width, height, samples, depth, jobs, aperture / 2, origin, llc, horiz, vert, u, v, w}
 }
 
+func (cam Camera) ImageWidth() int {
+	return cam.width
+}
+
+func (cam Camera) ImageHeight() int {
+	return cam.height
+}
+
 func (cam Camera) ray(s, t float64) Ray {
 	var (
 		rd     = RandomVec3InUnitSphere().MulS(cam.lensRadius)
@@ -48,27 +53,6 @@ func (cam Camera) ray(s, t float64) Ray {
 		cam.origin.Add(offset),
 		cam.lowerLeftCorner.Add(cam.horiz.MulS(s), cam.vert.MulS(t)).Sub(cam.origin, offset),
 	}
-}
-
-func (Camera) clamp(x, min, max float64) float64 {
-	if x < min {
-		return min
-	} else if x > max {
-		return max
-	}
-	return x
-}
-
-func (cam Camera) writeColor(w io.Writer, c Color, samples int) {
-	// Divide the color by the number of samples and scale float values [0, 1]
-	// to [0, 255]
-	var (
-		scale = 1.0 / float64(samples)
-		r     = int(255.999 * cam.clamp(math.Sqrt(c.X*scale), 0.0, 0.999))
-		g     = int(255.999 * cam.clamp(math.Sqrt(c.Y*scale), 0.0, 0.999))
-		b     = int(255.999 * cam.clamp(math.Sqrt(c.Z*scale), 0.0, 0.999))
-	)
-	fmt.Fprintln(w, r, g, b)
 }
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
@@ -110,24 +94,15 @@ LOOP:
 	goto LOOP // recursive version causes stack overflow
 }
 
-func (cam Camera) Render(world Hittables, writer io.Writer) {
-	fmt.Fprintln(writer, "P3")
-	fmt.Fprintln(writer, cam.width, cam.height)
-	fmt.Fprintln(writer, "255")
-
+func (cam Camera) Render(world Hittables) chan RGB {
 	// Pan across each pixel of the output image and calculate the color of each.
-	var (
-		wg      sync.WaitGroup
-		results = make(chan chan Color, cam.jobs)
-	)
-
-	wg.Add(1)
+	ordered := make(chan chan RGB, cam.jobs) // buffered channel for backpressure as newly spawned goroutines will wait
 	go func() {
 		for j := cam.height; j >= 0; j-- {
 			for i := 0; i < cam.width; i++ {
 				// calculate each ray concurrently
-				ch := make(chan Color, 1)
-				results <- ch
+				ch := make(chan RGB, 1)
+				ordered <- ch
 
 				go func(j, i int) {
 					var (
@@ -145,23 +120,20 @@ func (cam Camera) Render(world Hittables, writer io.Writer) {
 						pixel = pixel.Add(c)
 					}
 
-					ch <- pixel
+					ch <- pixel.RGB(float64(cam.samples))
 					close(ch)
 				}(j, i)
 			}
 		}
-		close(results)
-		wg.Done()
+		close(ordered)
 	}()
 
-	wg.Add(1)
+	results := make(chan RGB)
 	go func() {
-		for ch := range results {
-			pixel := <-ch
-			cam.writeColor(writer, pixel, cam.samples)
+		for result := range ordered {
+			results <- <-result
 		}
-		wg.Done()
+		close(results)
 	}()
-
-	wg.Wait()
+	return results
 }

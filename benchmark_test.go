@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-type writer struct{}
-
-func (w writer) Write(p []byte) (int, error) {
-	return len(p), nil
-}
-
 func newBenchmarkCamera() Camera {
 	return NewCamera(
 		256,
@@ -28,12 +22,12 @@ func newBenchmarkCamera() Camera {
 
 func BenchmarkRender(b *testing.B) {
 	var (
-		world      = randomScene()
-		cam        = newBenchmarkCamera()
-		mockWriter = writer{}
+		world = randomScene()
+		cam   = newBenchmarkCamera()
 	)
 
 	b.Run("render", func(b *testing.B) {
-		cam.Render(world, mockWriter)
+		for _ = range cam.Render(world) {
+		}
 	})
 }

@@ -155,6 +155,31 @@ func (v Vec3) NearZero() bool {
 	return v.X < s && v.Y < s && v.Z < s
 }
 
+type RGB struct {
+	R, G, B int
+}
+
+func (v Vec3) RGB(scale float64) RGB {
+	return v.rgb(v.DivS(scale))
+}
+
+func (Vec3) rgb(v Vec3) RGB {
+	return RGB{
+		R: int(255.999 * v.clamp(math.Sqrt(v.X), 0.0, 0.999)),
+		G: int(255.999 * v.clamp(math.Sqrt(v.Y), 0.0, 0.999)),
+		B: int(255.999 * v.clamp(math.Sqrt(v.Z), 0.0, 0.999)),
+	}
+}
+
+func (Vec3) clamp(x, min, max float64) float64 {
+	if x < min {
+		return min
+	} else if x > max {
+		return max
+	}
+	return x
+}
+
 func RandomVec3(min, max float64) Vec3 {
 	f := func() float64 {
 		return min + rand.Float64()*(max-min)
