@@ -1,6 +1,7 @@
 package main
 
 import (
+	"iter"
 	"math"
 	"math/rand"
 )
@@ -98,46 +99,47 @@ LOOP:
 	goto LOOP // recursive version causes stack overflow
 }
 
-func (cam Camera) Render(world Hittables) chan RGB {
-	// Pan across each pixel of the output image and calculate the color of each.
-	ordered := make(chan chan RGB, cam.jobs) // buffered channel for backpressure as newly spawned goroutines will wait
-	go func() {
+type Coords struct {
+	i, j int
+}
+
+func (cam Camera) coords() iter.Seq[Coords] {
+	return func(yield func(Coords) bool) {
 		for j := cam.height; j >= 0; j-- {
 			for i := 0; i < cam.width; i++ {
-				// calculate each ray concurrently
-				ch := make(chan RGB, 1)
-				ordered <- ch
-
-				go func(j, i int) {
-					var (
-						u, v  float64
-						pixel = Color{0, 0, 0}
-						r     Ray
-						c     Color
-					)
-
-					for s := 0; s < cam.samples; s++ {
-						u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
-						v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
-						r = cam.ray(u, v)
-						c = cam.rayColor(r, world)
-						pixel = pixel.Add(c)
-					}
-
-					ch <- pixel.RGB(float64(cam.samples))
-					close(ch)
-				}(j, i)
+				if !yield(Coords{i, j}) {
+					return
+				}
 			}
 		}
-		close(ordered)
-	}()
+	}
+}
 
-	results := make(chan RGB)
-	go func() {
-		for result := range ordered {
-			results <- <-result
+func (cam Camera) renderPixel(world Hittables, coords Coords) RGB {
+	var (
+		u, v  float64
+		pixel = Color{0, 0, 0}
+		r     Ray
+		c     Color
+	)
+
+	for s := 0; s < cam.samples; s++ {
+		u = (float64(coords.i) + rand.Float64()) / (float64(cam.width) - 1)
+		v = (float64(coords.j) + rand.Float64()) / (float64(cam.height) - 1)
+		r = cam.ray(u, v)
+		c = cam.rayColor(r, world)
+		pixel = pixel.Add(c)
+	}
+
+	return pixel.RGB(float64(cam.samples))
+}
+
+func (cam Camera) Render(world Hittables) iter.Seq[RGB] {
+	return func(yield func(RGB) bool) {
+		for rgb := range ParallelMap(cam.coords(), func(coords Coords) RGB { return cam.renderPixel(world, coords) }, cam.jobs) {
+			if !yield(rgb) {
+				return
+			}
 		}
-		close(results)
-	}()
-	return results
+	}
 }
