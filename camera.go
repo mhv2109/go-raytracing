@@ -1,6 +1,7 @@
 package main
 
 import (
+	"iter"
 	"math"
 	"math/rand"
 )
@@ -98,36 +99,46 @@ LOOP:
 	goto LOOP // recursive version causes stack overflow
 }
 
+func (cam Camera) coords() iter.Seq2[int, int] {
+	return func(yield func(int, int) bool) {
+		for j := cam.height; j >= 0; j-- {
+			for i := 0; i < cam.width; i++ {
+				if !yield(j, i) {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (cam Camera) Render(world Hittables) chan RGB {
 	// Pan across each pixel of the output image and calculate the color of each.
 	ordered := make(chan chan RGB, cam.jobs) // buffered channel for backpressure as newly spawned goroutines will wait
 	go func() {
-		for j := cam.height; j >= 0; j-- {
-			for i := 0; i < cam.width; i++ {
-				// calculate each ray concurrently
-				ch := make(chan RGB, 1)
-				ordered <- ch
+		for j, i := range cam.coords() {
+			// calculate each ray concurrently
+			ch := make(chan RGB, 1)
+			ordered <- ch
 
-				go func(j, i int) {
-					var (
-						u, v  float64
-						pixel = Color{0, 0, 0}
-						r     Ray
-						c     Color
-					)
+			go func(j, i int) {
+				var (
+					u, v  float64
+					pixel = Color{0, 0, 0}
+					r     Ray
+					c     Color
+				)
 
-					for s := 0; s < cam.samples; s++ {
-						u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
-						v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
-						r = cam.ray(u, v)
-						c = cam.rayColor(r, world)
-						pixel = pixel.Add(c)
-					}
+				for s := 0; s < cam.samples; s++ {
+					u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
+					v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
+					r = cam.ray(u, v)
+					c = cam.rayColor(r, world)
+					pixel = pixel.Add(c)
+				}
 
-					ch <- pixel.RGB(float64(cam.samples))
-					close(ch)
-				}(j, i)
-			}
+				ch <- pixel.RGB(float64(cam.samples))
+				close(ch)
+			}(j, i)
 		}
 		close(ordered)
 	}()
