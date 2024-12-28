@@ -113,28 +113,33 @@ func (cam Camera) coords() iter.Seq2[int, int] {
 
 func (cam Camera) renderPixel(world Hittables, j, i int) RGB {
 	var (
-		u, v    float64
-		r       Ray
-		c       Color
-		wg      sync.WaitGroup
-		samples = make([]Color, cam.samples)
+		res = Color{0, 0, 0}
+		wg  sync.WaitGroup
+		mut sync.Mutex
 	)
 
 	for s := 0; s < cam.samples; s++ {
 		wg.Add(1)
-		go func(s int) {
-			u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
-			v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
-			r = cam.ray(u, v)
-			c = cam.rayColor(r, world)
-			samples[s] = c
-			wg.Done()
-		}(s)
+		go func() {
+			defer wg.Done()
+
+			var (
+				u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
+				v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
+				r = cam.ray(u, v)
+				c = cam.rayColor(r, world)
+			)
+
+			mut.Lock()
+			defer mut.Unlock()
+
+			res = res.Add(c)
+		}()
 	}
 
 	wg.Wait()
 
-	return samples[0].Add(samples[1:]...).RGB(float64(cam.samples))
+	return res.RGB(float64(cam.samples))
 }
 
 func (cam Camera) render(world Hittables, coords iter.Seq2[int, int]) iter.Seq[RGB] {
