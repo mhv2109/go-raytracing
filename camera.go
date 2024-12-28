@@ -111,44 +111,36 @@ func (cam Camera) coords() iter.Seq2[int, int] {
 	}
 }
 
-func (cam Camera) Render(world Hittables) chan RGB {
+func (cam Camera) renderPixel(world Hittables, j, i int) RGB {
+	var (
+		u, v  float64
+		pixel = Color{0, 0, 0}
+		r     Ray
+		c     Color
+	)
+
+	for s := 0; s < cam.samples; s++ {
+		u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
+		v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
+		r = cam.ray(u, v)
+		c = cam.rayColor(r, world)
+		pixel = pixel.Add(c)
+	}
+
+	return pixel.RGB(float64(cam.samples))
+}
+
+func (cam Camera) render(world Hittables, coords iter.Seq2[int, int]) iter.Seq[RGB] {
+	return func(yield func(RGB) bool) {
+		for j, i := range coords {
+			if !yield(cam.renderPixel(world, j, i)) {
+				return
+			}
+		}
+	}
+}
+
+func (cam Camera) Render(world Hittables) iter.Seq[RGB] {
 	// Pan across each pixel of the output image and calculate the color of each.
-	ordered := make(chan chan RGB, cam.jobs) // buffered channel for backpressure as newly spawned goroutines will wait
-	go func() {
-		for j, i := range cam.coords() {
-			// calculate each ray concurrently
-			ch := make(chan RGB, 1)
-			ordered <- ch
-
-			go func(j, i int) {
-				var (
-					u, v  float64
-					pixel = Color{0, 0, 0}
-					r     Ray
-					c     Color
-				)
-
-				for s := 0; s < cam.samples; s++ {
-					u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
-					v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
-					r = cam.ray(u, v)
-					c = cam.rayColor(r, world)
-					pixel = pixel.Add(c)
-				}
-
-				ch <- pixel.RGB(float64(cam.samples))
-				close(ch)
-			}(j, i)
-		}
-		close(ordered)
-	}()
-
-	results := make(chan RGB)
-	go func() {
-		for result := range ordered {
-			results <- <-result
-		}
-		close(results)
-	}()
-	return results
+	return cam.render(world, cam.coords())
 }
