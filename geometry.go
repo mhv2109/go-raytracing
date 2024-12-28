@@ -25,48 +25,44 @@ func (v Vec3) Neg() Vec3 {
 	return v.MulS(-1)
 }
 
-func (v Vec3) Add(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.add(o)
-	for _, o := range others {
-		res = res.add(o)
+func (v Vec3) Add(vecs ...Vec3) Vec3 {
+	for _, o := range vecs {
+		v = v.add(o)
 	}
-	return
+	return v
 }
 
 func (v Vec3) add(o Vec3) Vec3 {
 	return Vec3{v.X + o.X, v.Y + o.Y, v.Z + o.Z}
 }
 
-func (v Vec3) AddS(t float64, others ...float64) (res Vec3) {
-	res = v.addS(t)
-	for _, o := range others {
-		res = res.addS(o)
+func (v Vec3) AddS(ts ...float64) Vec3 {
+	for _, t := range ts {
+		v = v.addS(t)
 	}
-	return
+	return v
 }
 
 func (v Vec3) addS(t float64) Vec3 {
 	return v.Add(Vec3{t, t, t})
 }
 
-func (v Vec3) Sub(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.sub(o)
-	for _, o := range others {
-		res = res.sub(o)
+func (v Vec3) Sub(vecs ...Vec3) Vec3 {
+	for _, o := range vecs {
+		v = v.sub(o)
 	}
-	return
+	return v
 }
 
 func (v Vec3) sub(o Vec3) Vec3 {
 	return Vec3{v.X - o.X, v.Y - o.Y, v.Z - o.Z}
 }
 
-func (v Vec3) SubS(t float64, others ...float64) (res Vec3) {
-	res = v.subS(t)
-	for _, o := range others {
-		res = res.subS(o)
+func (v Vec3) SubS(ts ...float64) Vec3 {
+	for _, t := range ts {
+		v = v.subS(t)
 	}
-	return
+	return v
 }
 
 func (v Vec3) subS(t float64) Vec3 {
@@ -85,36 +81,33 @@ func (v Vec3) mulS(t float64) Vec3 {
 	return Vec3{v.X * t, v.Y * t, v.Z * t}
 }
 
-func (v Vec3) Mul(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.mul(o)
-	for _, o := range others {
-		res = res.mul(o)
+func (v Vec3) Mul(vecs ...Vec3) Vec3 {
+	for _, o := range vecs {
+		v = v.mul(o)
 	}
-	return
+	return v
 }
 
 func (v Vec3) mul(o Vec3) Vec3 {
 	return Vec3{v.X * o.X, v.Y * o.Y, v.Z * o.Z}
 }
 
-func (v Vec3) DivS(t float64, others ...float64) (res Vec3) {
-	res = v.divS(t)
-	for _, o := range others {
-		res = res.divS(o)
+func (v Vec3) DivS(ts ...float64) Vec3 {
+	for _, t := range ts {
+		v = v.divS(t)
 	}
-	return
+	return v
 }
 
 func (v Vec3) divS(t float64) Vec3 {
 	return Vec3{v.X / t, v.Y / t, v.Z / t}
 }
 
-func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.div(o)
-	for _, o := range others {
-		res = res.div(o)
+func (v Vec3) Div(vecs ...Vec3) Vec3 {
+	for _, o := range vecs {
+		v = v.div(o)
 	}
-	return
+	return v
 }
 
 func (v Vec3) div(o Vec3) Vec3 {
