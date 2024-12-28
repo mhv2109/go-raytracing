@@ -10,7 +10,6 @@ func newBenchmarkCamera() Camera {
 		defaultHeight/10,
 		defaultSamples/10,
 		defaultDepth/10,
-		defaultJobs,
 		Point3{13, 2, 3},
 		Point3{0, 0, 0},
 		Vec3{0, 1, 0},

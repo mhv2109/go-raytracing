@@ -4,18 +4,18 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"sync"
 )
 
 type Camera struct {
 	width, height           int
 	samples, depth          int
-	jobs                    int
 	lensRadius              float64
 	origin, lowerLeftCorner Point3
 	horiz, vert, u, v, w    Vec3
 }
 
-func NewCamera(width, height, samples, depth, jobs int, lookfrom, lookat Point3, vup Vec3, vfov, aperture, focusDist float64) Camera {
+func NewCamera(width, height, samples, depth int, lookfrom, lookat Point3, vup Vec3, vfov, aperture, focusDist float64) Camera {
 	var (
 		// field of view
 		theta      = vfov * (math.Pi / 180.0)
@@ -34,7 +34,7 @@ func NewCamera(width, height, samples, depth, jobs int, lookfrom, lookat Point3,
 		vert   = v.MulS(viewHeight).MulS(focusDist)
 		llc    = origin.Sub(horiz.DivS(2), vert.DivS(2), w.MulS(focusDist))
 	)
-	return Camera{width, height, samples, depth, jobs, aperture / 2, origin, llc, horiz, vert, u, v, w}
+	return Camera{width, height, samples, depth, aperture / 2, origin, llc, horiz, vert, u, v, w}
 }
 
 func (cam Camera) ImageWidth() int {
@@ -113,21 +113,28 @@ func (cam Camera) coords() iter.Seq2[int, int] {
 
 func (cam Camera) renderPixel(world Hittables, j, i int) RGB {
 	var (
-		u, v  float64
-		pixel = Color{0, 0, 0}
-		r     Ray
-		c     Color
+		u, v    float64
+		r       Ray
+		c       Color
+		wg      sync.WaitGroup
+		samples = make([]Color, cam.samples)
 	)
 
 	for s := 0; s < cam.samples; s++ {
-		u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
-		v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
-		r = cam.ray(u, v)
-		c = cam.rayColor(r, world)
-		pixel = pixel.Add(c)
+		wg.Add(1)
+		go func(s int) {
+			u = (float64(i) + rand.Float64()) / (float64(cam.width) - 1)
+			v = (float64(j) + rand.Float64()) / (float64(cam.height) - 1)
+			r = cam.ray(u, v)
+			c = cam.rayColor(r, world)
+			samples[s] = c
+			wg.Done()
+		}(s)
 	}
 
-	return pixel.RGB(float64(cam.samples))
+	wg.Wait()
+
+	return samples[0].Add(samples[1:]...).RGB(float64(cam.samples))
 }
 
 func (cam Camera) render(world Hittables, coords iter.Seq2[int, int]) iter.Seq[RGB] {
