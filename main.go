@@ -36,7 +36,7 @@ func init() {
 	flag.IntVar(&imgHeight, "height", 1440, "output image height")
 	flag.IntVar(&samples, "samples", 500, "number of samples per pixel")
 	flag.IntVar(&depth, "depth", 50, "number of ray bounces to calculate")
-	flag.IntVar(&jobs, "jobs", 2*runtime.NumCPU(), "number of jobs for rendering")
+	flag.IntVar(&jobs, "jobs", defaultJobs, "number of jobs for rendering")
 	flag.BoolVar(&simpleDiff, "simple", false, "use simple diffusion calculation")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "create a CPU profile and save to file")
 	flag.StringVar(&outputFile, "output", "", "output file, defaults to stdout")
