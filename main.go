@@ -28,7 +28,7 @@ var (
 	defaultHeight  = 1440
 	defaultSamples = 500
 	defaultDepth   = 50
-	defaultJobs    = 16 * runtime.NumCPU() // determined by benchmarking
+	defaultJobs    = 4 * runtime.NumCPU() // determined by benchmarking
 )
 
 func init() {
