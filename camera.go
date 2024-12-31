@@ -67,36 +67,32 @@ func (cam Camera) rayColor(r Ray, world Hittables) Color {
 	var (
 		mult  = Vec3{1, 1, 1}
 		hr    HitRecord
-		n     = 0
 		att   Color
 		scatt Ray
 	)
 
-LOOP:
-	if n > cam.depth {
-		return Color{0, 0, 0}
+	// recursive version causes stack overflow
+	for n := 0; n < cam.depth; n++ {
+		if !world.Hit(r, 1e-3, math.MaxFloat64, &hr) {
+			// if no object hit, render background
+			var (
+				dir = r.Dir.Unit()
+				a   = Color{1, 1, 1}       // white
+				b   = Color{0.5, 0.7, 1.0} // blue
+				t   = 0.5 * (dir.Y + 1.0)
+			)
+			return a.MulS(1 - t).Add(b.MulS(t)).Mul(mult) // (1-t)*white + t*blue
+		}
+
+		// objects in the scene
+		if !hr.M.Scatter(r, hr, &att, &scatt) {
+			break
+		}
+		r = scatt
+		mult = mult.Mul(att)
 	}
 
-	if !world.Hit(r, 1e-3, math.MaxFloat64, &hr) {
-		// if no object hit, render background
-		var (
-			dir = r.Dir.Unit()
-			a   = Color{1, 1, 1}       // white
-			b   = Color{0.5, 0.7, 1.0} // blue
-			t   = 0.5 * (dir.Y + 1.0)
-		)
-		return a.MulS(1 - t).Add(b.MulS(t)).Mul(mult) // (1-t)*white + t*blue
-	}
-
-	// objects in the scene
-	if !hr.M.Scatter(r, hr, &att, &scatt) {
-		return Color{0, 0, 0}
-	}
-	r = scatt
-	mult = mult.Mul(att)
-
-	n++
-	goto LOOP // recursive version causes stack overflow
+	return Color{0, 0, 0}
 }
 
 type Coords struct {
