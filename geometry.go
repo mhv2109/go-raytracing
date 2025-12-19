@@ -22,7 +22,7 @@ func (v Vec3) Sum() float64 {
 }
 
 func (v Vec3) Neg() Vec3 {
-	return v.MulS(-1)
+	return Vec3{-v.X, -v.Y, -v.Z}
 }
 
 func (v Vec3) Add(o Vec3, others ...Vec3) (res Vec3) {
@@ -46,7 +46,7 @@ func (v Vec3) AddS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) addS(t float64) Vec3 {
-	return v.Add(Vec3{t, t, t})
+	return Vec3{v.X + t, v.Y + t, v.Z + t}
 }
 
 func (v Vec3) Sub(o Vec3, others ...Vec3) (res Vec3) {
@@ -70,7 +70,7 @@ func (v Vec3) SubS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) subS(t float64) Vec3 {
-	return v.AddS(-t)
+	return Vec3{v.X - t, v.Y - t, v.Z - t}
 }
 
 func (v Vec3) MulS(t float64, others ...float64) (res Vec3) {
@@ -132,7 +132,7 @@ func (v Vec3) Len() float64 {
 }
 
 func (v Vec3) LenSq() float64 {
-	return v.Sq().Sum()
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
 }
 
 func (v Vec3) Sq() Vec3 {
@@ -140,7 +140,7 @@ func (v Vec3) Sq() Vec3 {
 }
 
 func (v Vec3) Dot(o Vec3) float64 {
-	return v.Mul(o).Sum()
+	return v.X*o.X + v.Y*o.Y + v.Z*o.Z
 }
 
 func (v Vec3) Cross(o Vec3) Vec3 {
@@ -152,7 +152,8 @@ func (v Vec3) Cross(o Vec3) Vec3 {
 }
 
 func (v Vec3) Unit() Vec3 {
-	return v.DivS(v.Len())
+	l := v.Len()
+	return v.DivS(l)
 }
 
 func (v Vec3) NearZero() bool {
