@@ -106,6 +106,9 @@ func (v Vec3) DivS(t float64, others ...float64) (res Vec3) {
 }
 
 func (v Vec3) divS(t float64) Vec3 {
+	if t == 0 {
+		panic("Vec3.DivS: division by zero")
+	}
 	return Vec3{v.X / t, v.Y / t, v.Z / t}
 }
 
@@ -118,6 +121,9 @@ func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
 }
 
 func (v Vec3) div(o Vec3) Vec3 {
+	if o.X == 0 || o.Y == 0 || o.Z == 0 {
+		panic("Vec3.Div: division by zero")
+	}
 	return Vec3{v.X / o.X, v.Y / o.Y, v.Z / o.Z}
 }
 
