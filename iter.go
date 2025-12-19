@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"iter"
 	"sync"
 )
@@ -10,47 +11,82 @@ func ParallelMap[T, V any](
 	f func(T) V,
 	chunksize int,
 ) iter.Seq[V] {
+	if chunksize <= 0 {
+		chunksize = 1
+	}
+
 	return func(yield func(V) bool) {
-		var (
-			next, stop = iter.Pull(seq)
-			buf        = make(chan chan V, chunksize)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-			wg sync.WaitGroup
-		)
+		next, stop := iter.Pull(seq)
+		defer stop()
 
+		buf := make(chan chan V, chunksize)
+
+		var wg sync.WaitGroup
+
+		// Producer: pulls from seq, starts workers, and feeds their result channels into buf.
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			defer stop()
 			defer close(buf)
 
 			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
 				v, ok := next()
 				if !ok {
-					break
-				}
-
-				// spawn a goroutine for each element and put the results in the shared buffer
-				ch := make(chan V)
-				buf <- ch
-				go func() {
-					defer close(ch)
-					ch <- f(v)
-				}()
-			}
-		}()
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			// read each result as they become available and yield to caller
-			for ch := range buf {
-				if !yield(<-ch) {
 					return
 				}
+
+				ch := make(chan V, 1)
+
+				select {
+				case <-ctx.Done():
+					close(ch)
+					return
+				case buf <- ch:
+				}
+
+				wg.Add(1)
+				go func(val T, out chan V) {
+					defer wg.Done()
+					defer close(out)
+
+					select {
+					case <-ctx.Done():
+						return
+					case out <- f(val):
+					}
+				}(v, ch)
 			}
 		}()
+
+		// Consumer: reads workers' result channels from buf and yields values downstream.
+		for ch := range buf {
+			var v V
+			ok := true
+
+			select {
+			case <-ctx.Done():
+				ok = false
+			case v, ok = <-ch:
+			}
+
+			if !ok {
+				continue
+			}
+
+			if !yield(v) {
+				cancel()
+				break
+			}
+		}
 
 		wg.Wait()
 	}
