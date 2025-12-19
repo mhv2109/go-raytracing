@@ -90,12 +90,9 @@ type Hittables struct {
 }
 
 func NewHittables(objects ...Hittable) Hittables {
-	o := make([]Hittable, 0)
-	h := Hittables{o}
-	if len(objects) > 0 {
-		h.Add(objects...)
-	}
-	return h
+	o := make([]Hittable, len(objects))
+	copy(o, objects)
+	return Hittables{Objects: o}
 }
 
 func (h *Hittables) Add(objects ...Hittable) {
@@ -103,7 +100,10 @@ func (h *Hittables) Add(objects ...Hittable) {
 }
 
 func (h *Hittables) Clear() {
-	h.Objects = make([]Hittable, 0)
+	for i := range h.Objects {
+		h.Objects[i] = nil
+	}
+	h.Objects = h.Objects[:0]
 }
 
 func (h *Hittables) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
