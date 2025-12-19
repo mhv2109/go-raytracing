@@ -61,6 +61,72 @@ func TestDivPoint(t *testing.T) {
 	}
 }
 
+func TestVec3DivSZeroPanics(t *testing.T) {
+	v := Vec3{2, 4, 6}
+
+	assertPanics(t, "Vec3.DivS: division by zero", func() {
+		_ = v.DivS(0)
+	})
+
+	assertPanics(t, "Vec3.DivS: division by zero", func() {
+		_ = v.DivS(2, 0)
+	})
+}
+
+func TestVec3DivZeroComponentPanics(t *testing.T) {
+	v := Vec3{2, 4, 6}
+
+	assertPanics(t, "Vec3.Div: division by zero", func() {
+		_ = v.Div(Vec3{0, 1, 1})
+	})
+
+	assertPanics(t, "Vec3.Div: division by zero", func() {
+		_ = v.Div(Vec3{1, 1, 1}, Vec3{1, 0, 1})
+	})
+}
+
+func TestVec3DivSNormal(t *testing.T) {
+	v := Vec3{2, 4, 6}
+
+	if got := v.DivS(2); got != (Vec3{1, 2, 3}) {
+		t.Fatalf("DivS(2) = %#v, want %#v", got, Vec3{1, 2, 3})
+	}
+
+	if got := v.DivS(2, 2); got != (Vec3{0.5, 1, 1.5}) {
+		t.Fatalf("DivS(2,2) = %#v, want %#v", got, Vec3{0.5, 1, 1.5})
+	}
+}
+
+func TestVec3DivNormal(t *testing.T) {
+	v := Vec3{2, 4, 6}
+
+	if got := v.Div(Vec3{2, 4, 6}); got != (Vec3{1, 1, 1}) {
+		t.Fatalf("Div = %#v, want %#v", got, Vec3{1, 1, 1})
+	}
+
+	if got := v.Div(Vec3{2, 4, 6}, Vec3{1, 2, 3}); got != (Vec3{1, 0.5, 0.3333333333333333}) {
+		t.Fatalf("Div chain = %#v, want %#v", got, Vec3{1, 0.5, 0.3333333333333333})
+	}
+}
+
+func assertPanics(t *testing.T, wantMsg string, f func()) {
+	t.Helper()
+	defer func() {
+		if r := recover(); r != nil {
+			msg, ok := r.(string)
+			if !ok {
+				return
+			}
+			if msg != wantMsg {
+				t.Fatalf("panic message = %q, want %q", msg, wantMsg)
+			}
+		} else {
+			t.Fatalf("expected panic %q, but function returned normally", wantMsg)
+		}
+	}()
+	f()
+}
+
 func TestLenPoint(t *testing.T) {
 	p1 := Point3{1, 1, -2}
 
