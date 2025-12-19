@@ -188,17 +188,27 @@ func (Vec3) clamp(x, min, max float64) float64 {
 }
 
 func RandomVec3(min, max float64) Vec3 {
-	f := func() float64 {
-		return min + rand.Float64()*(max-min)
+	r1 := rand.Float64()
+	r2 := rand.Float64()
+	r3 := rand.Float64()
+	scale := max - min
+	return Vec3{
+		min + r1*scale,
+		min + r2*scale,
+		min + r3*scale,
 	}
-	return Vec3{f(), f(), f()}
 }
 
 func RandomVec3InUnitSphere() Vec3 {
 	for {
-		p := RandomVec3(-1, 1)
-		if p.LenSq() < 1 {
-			return p
+		// Rejection sampling in cube [-1,1]^3, identical distribution to the
+		// previous implementation but avoids an intermediate Vec3 before the
+		// length-squared check.
+		x := -1 + 2*rand.Float64()
+		y := -1 + 2*rand.Float64()
+		z := -1 + 2*rand.Float64()
+		if x*x+y*y+z*z < 1 {
+			return Vec3{x, y, z}
 		}
 	}
 }
