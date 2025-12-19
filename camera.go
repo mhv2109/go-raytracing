@@ -101,7 +101,7 @@ type Coords struct {
 
 func (cam Camera) coords() iter.Seq[Coords] {
 	return func(yield func(Coords) bool) {
-		for j := cam.height; j >= 0; j-- {
+		for j := cam.height - 1; j >= 0; j-- {
 			for i := 0; i < cam.width; i++ {
 				if !yield(Coords{i, j}) {
 					return
