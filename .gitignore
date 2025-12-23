@@ -76,3 +76,6 @@ go.work
 # Profiling
 *.prof
 benchmark.txt
+
+# AI
+.serena/
