@@ -45,7 +45,6 @@ func TestCameraCoordsCoverageAndBounds(t *testing.T) {
 				t.Fatalf("expected coord %+v to be present", c)
 			}
 			if first {
-				prevJ = j
 				first = false
 			} else if j > prevJ {
 				t.Fatalf("coords not in expected top-to-bottom order: j=%d after j=%d", j, prevJ)

@@ -156,7 +156,11 @@ func main() {
 		if err != nil {
 			log.Fatal("could not create CPU profile: ", err)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Printf("warning: failed to close cpu profile file: %v", err)
+			}
+		}()
 		if err := pprof.StartCPUProfile(f); err != nil {
 			log.Fatal("could not start CPU profile: ", err)
 		}
@@ -172,20 +176,35 @@ func main() {
 		if err != nil {
 			log.Fatal("could not create output file: ", err)
 		}
-		defer output.Close()
+		defer func() {
+			if err := output.Close(); err != nil {
+				log.Printf("warning: failed to close output file: %v", err)
+			}
+		}()
 	}
 
 	// output image
 
 	cam := newCamera()
 
-	fmt.Fprintln(output, "P3")
-	fmt.Fprintln(output, cam.ImageWidth(), cam.ImageHeight())
-	fmt.Fprintln(output, "255")
+	if _, err := fmt.Fprintln(output, "P3"); err != nil {
+		log.Fatalf("failed to write P3 header: %v", err)
+	}
+	if _, err := fmt.Fprintln(output, cam.ImageWidth(), cam.ImageHeight()); err != nil {
+		log.Fatalf("failed to write image dimensions: %v", err)
+	}
+	if _, err := fmt.Fprintln(output, "255"); err != nil {
+		log.Fatalf("failed to write max color value: %v", err)
+	}
 
 	bar := progressbar.Default(int64(cam.ImageSize()))
 	for pixel := range cam.Render(randomScene()) {
-		fmt.Fprintln(output, pixel.R, pixel.G, pixel.B)
-		bar.Add(1)
+		if _, err := fmt.Fprintln(output, pixel.R, pixel.G, pixel.B); err != nil {
+			log.Printf("warning: failed to write pixel: %v", err)
+		}
+		if err := bar.Add(1); err != nil {
+			// progress bar errors are non-fatal; log and continue
+			log.Printf("warning: progress bar add failed: %v", err)
+		}
 	}
 }
