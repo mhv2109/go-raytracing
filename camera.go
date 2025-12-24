@@ -63,7 +63,7 @@ func (cam Camera) ray(s, t float64) Ray {
 // rayColor calculates the Color along the Ray. We define objects + colors here,
 // and return an object's color if the Ray intersects it. Otherwise, we return
 // the background color
-func (cam Camera) rayColor(r Ray, world Hittables) Color {
+func (cam Camera) rayColor(r Ray, world Hittable) Color {
 	var (
 		mult  = Vec3{1, 1, 1}
 		hr    HitRecord
@@ -111,7 +111,7 @@ func (cam Camera) coords() iter.Seq[Coords] {
 	}
 }
 
-func (cam Camera) renderPixel(world Hittables, coords Coords) RGB {
+func (cam Camera) renderPixel(world Hittable, coords Coords) RGB {
 	var (
 		u, v  float64
 		pixel = Color{0, 0, 0}
@@ -130,7 +130,7 @@ func (cam Camera) renderPixel(world Hittables, coords Coords) RGB {
 	return pixel.RGB(float64(cam.samples))
 }
 
-func (cam Camera) Render(world Hittables) iter.Seq[RGB] {
+func (cam Camera) Render(world Hittable) iter.Seq[RGB] {
 	return func(yield func(RGB) bool) {
 		for rgb := range ParallelMap(cam.coords(), func(coords Coords) RGB { return cam.renderPixel(world, coords) }, cam.jobs) {
 			if !yield(rgb) {

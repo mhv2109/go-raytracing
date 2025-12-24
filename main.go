@@ -50,8 +50,8 @@ func diffusionMaterial() DiffusionOpt {
 	return WithDiffusionType(Lambertian)
 }
 
-func randomScene() Hittables {
-	world := NewHittables()
+func randomScene() Hittable {
+	objects := make([]Hittable, 0, 500)
 
 	// earth/ground/floor
 
@@ -60,7 +60,7 @@ func randomScene() Hittables {
 		1000,
 		NewDiffusion(Color{0.5, 0.5, 0.5}, diffusionMaterial()),
 	}
-	world.Add(ground)
+	objects = append(objects, ground)
 
 	// big spheres in the center
 
@@ -69,21 +69,21 @@ func randomScene() Hittables {
 		1,
 		NewDielectric(Color{1, 1, 1}, IndexOfRefraction(1.5)),
 	}
-	world.Add(sphere1)
+	objects = append(objects, sphere1)
 
 	sphere2 := Sphere{
 		Point3{-4, 1, 0},
 		1,
 		NewDiffusion(Color{0.4, 0.2, 0.1}, diffusionMaterial()),
 	}
-	world.Add(sphere2)
+	objects = append(objects, sphere2)
 
 	sphere3 := Sphere{
 		Point3{4, 1, 0},
 		1,
 		NewMetal(Color{0.7, 0.6, 0.5}, Fuzz(0)),
 	}
-	world.Add(sphere3)
+	objects = append(objects, sphere3)
 
 	// add random little spheres all over the ground
 
@@ -115,12 +115,12 @@ func randomScene() Hittables {
 					m = NewDielectric(c, IndexOfRefraction(1.5))
 				}
 
-				world.Add(Sphere{center, 0.2, m})
+				objects = append(objects, Sphere{center, 0.2, m})
 			}
 		}
 	}
 
-	return world
+	return NewBVH(objects)
 }
 
 func newCamera() Camera {
@@ -186,6 +186,7 @@ func main() {
 	// output image
 
 	cam := newCamera()
+	world := randomScene()
 
 	if _, err := fmt.Fprintln(output, "P3"); err != nil {
 		log.Fatalf("failed to write P3 header: %v", err)
@@ -198,7 +199,7 @@ func main() {
 	}
 
 	bar := progressbar.Default(int64(cam.ImageSize()))
-	for pixel := range cam.Render(randomScene()) {
+	for pixel := range cam.Render(world) {
 		if _, err := fmt.Fprintln(output, pixel.R, pixel.G, pixel.B); err != nil {
 			log.Printf("warning: failed to write pixel: %v", err)
 		}

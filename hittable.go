@@ -43,6 +43,15 @@ type Sphere struct {
 	M      Material
 }
 
+// BoundingBox returns the axis-aligned bounding box for the sphere.
+func (s Sphere) BoundingBox() AABB {
+	radius := Vec3{s.R, s.R, s.R}
+	return NewAABB(
+		s.Center.Sub(radius),
+		s.Center.Add(radius),
+	)
+}
+
 func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 	// A ray intersects the sphere if there exists two solutions for the quadratic
 	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*halfb.
