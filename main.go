@@ -120,6 +120,8 @@ func randomScene() Hittables {
 		}
 	}
 
+	world.BuildBVH()
+
 	return world
 }
 

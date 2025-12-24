@@ -224,3 +224,46 @@ type Ray struct {
 func (r Ray) At(t float64) Vec3 {
 	return r.Orig.Add(r.Dir.MulS(t)) // (A + t*b)
 }
+
+type AABB struct {
+	Min, Max Point3
+}
+
+func NewAABB(a, b Point3) AABB {
+	return AABB{Min: a, Max: b}
+}
+
+func (b AABB) Hit(r Ray, tMin, tMax float64) bool {
+	for a := 0; a < 3; a++ {
+		var origin, direction, minA, maxA float64
+		switch a {
+		case 0:
+			origin, direction = r.Orig.X, r.Dir.X
+			minA, maxA = b.Min.X, b.Max.X
+		case 1:
+			origin, direction = r.Orig.Y, r.Dir.Y
+			minA, maxA = b.Min.Y, b.Max.Y
+		default:
+			origin, direction = r.Orig.Z, r.Dir.Z
+			minA, maxA = b.Min.Z, b.Max.Z
+		}
+
+		invD := 1.0 / direction
+		t0 := (minA - origin) * invD
+		t1 := (maxA - origin) * invD
+		if invD < 0 {
+			t0, t1 = t1, t0
+		}
+
+		if t0 > tMin {
+			tMin = t0
+		}
+		if t1 < tMax {
+			tMax = t1
+		}
+		if tMax <= tMin {
+			return false
+		}
+	}
+	return true
+}

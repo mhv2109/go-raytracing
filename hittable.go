@@ -1,6 +1,10 @@
 package main
 
-import "math"
+import (
+	"math"
+	"math/rand"
+	"sort"
+)
 
 // HitRecord captures the requisite details of a Ray intersecting with a Hittable.
 type HitRecord struct {
@@ -34,6 +38,9 @@ func NewHitRecord(P Point3, N Vec3, T float64, M Material, r Ray) HitRecord {
 type Hittable interface {
 	// Hit checks if r interesects with Hittable. If so, it returns a HitRecord, nil otherwise.
 	Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool
+	// BoundingBox returns an axis-aligned bounding box for the hittable between time0 and time1.
+	// For this static scene, time parameters are ignored but retained for API flexibility.
+	BoundingBox(time0, time1 float64, box *AABB) bool
 }
 
 // Sphere is a shape defined by a Center point and a radius.
@@ -44,12 +51,8 @@ type Sphere struct {
 }
 
 func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
-	// A ray intersects the sphere if there exists two solutions for the quadratic
-	// equation (P(t) - C) dot (P(t) - C) - r^2 = 0 for all t, where P(t) = A + t*halfb.
-	// We can determine this by calulating the descriminant d. This has been
-	// simplified using the method in section 6.2.
 	var (
-		oc = r.Orig.Sub(s.Center) // A - C
+		oc = r.Orig.Sub(s.Center)
 
 		a     = r.Dir.LenSq()
 		halfb = oc.Dot(r.Dir)
@@ -62,7 +65,6 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 		return false
 	}
 
-	// Find the nearest root that lies in the acceptable range.
 	var (
 		sqrtd = math.Sqrt(d)
 		root  = (-halfb - sqrtd) / a
@@ -85,8 +87,18 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 	return true
 }
 
+func (s Sphere) BoundingBox(time0, time1 float64, box *AABB) bool {
+	radius := Vec3{s.R, s.R, s.R}
+	*box = AABB{
+		Min: s.Center.Sub(radius),
+		Max: s.Center.Add(radius),
+	}
+	return true
+}
+
 type Hittables struct {
 	Objects []Hittable
+	bvhRoot Hittable
 }
 
 func NewHittables(objects ...Hittable) Hittables {
@@ -97,6 +109,7 @@ func NewHittables(objects ...Hittable) Hittables {
 
 func (h *Hittables) Add(objects ...Hittable) {
 	h.Objects = append(h.Objects, objects...)
+	h.bvhRoot = nil
 }
 
 func (h *Hittables) Clear() {
@@ -104,9 +117,115 @@ func (h *Hittables) Clear() {
 		h.Objects[i] = nil
 	}
 	h.Objects = h.Objects[:0]
+	h.bvhRoot = nil
+}
+
+type BVHNode struct {
+	left, right Hittable
+	box        AABB
+}
+
+func NewBVHNode(objects []Hittable, time0, time1 float64) Hittable {
+	n := len(objects)
+	if n == 0 {
+		return nil
+	}
+	if n == 1 {
+		var box AABB
+		if !objects[0].BoundingBox(time0, time1, &box) {
+			return nil
+		}
+		return &BVHNode{left: objects[0], right: nil, box: box}
+	}
+
+	axis := rand.Intn(3)
+	less := func(i, j int) bool {
+		var boxI, boxJ AABB
+		if !objects[i].BoundingBox(time0, time1, &boxI) || !objects[j].BoundingBox(time0, time1, &boxJ) {
+			return false
+		}
+		switch axis {
+		case 0:
+			return boxI.Min.X < boxJ.Min.X
+		case 1:
+			return boxI.Min.Y < boxJ.Min.Y
+		default:
+			return boxI.Min.Z < boxJ.Min.Z
+		}
+	}
+
+	sort.Slice(objects, less)
+
+	mid := n / 2
+	left := NewBVHNode(objects[:mid], time0, time1)
+	right := NewBVHNode(objects[mid:], time0, time1)
+
+	var boxLeft, boxRight AABB
+	if left == nil || right == nil || !left.BoundingBox(time0, time1, &boxLeft) || !right.BoundingBox(time0, time1, &boxRight) {
+		return nil
+	}
+
+	return &BVHNode{
+		left:  left,
+		right: right,
+		box:  SurroundingBox(boxLeft, boxRight),
+	}
+}
+
+func (n *BVHNode) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
+	if n == nil {
+		return false
+	}
+	if !n.box.Hit(r, tmin, tmax) {
+		return false
+	}
+
+	hitLeft := n.left != nil && n.left.Hit(r, tmin, tmax, hr)
+	if hitLeft {
+		tmax = hr.T
+	}
+	hitRight := n.right != nil && n.right.Hit(r, tmin, tmax, hr)
+
+	return hitLeft || hitRight
+}
+
+func (n *BVHNode) BoundingBox(time0, time1 float64, box *AABB) bool {
+	if n == nil {
+		return false
+	}
+	*box = n.box
+	return true
+}
+
+func SurroundingBox(box0, box1 AABB) AABB {
+	small := Point3{
+		X: math.Min(box0.Min.X, box1.Min.X),
+		Y: math.Min(box0.Min.Y, box1.Min.Y),
+		Z: math.Min(box0.Min.Z, box1.Min.Z),
+	}
+	big := Point3{
+		X: math.Max(box0.Max.X, box1.Max.X),
+		Y: math.Max(box0.Max.Y, box1.Max.Y),
+		Z: math.Max(box0.Max.Z, box1.Max.Z),
+	}
+	return AABB{Min: small, Max: big}
+}
+
+func (h *Hittables) BuildBVH() {
+	if len(h.Objects) == 0 {
+		h.bvhRoot = nil
+		return
+	}
+	objs := make([]Hittable, len(h.Objects))
+	copy(objs, h.Objects)
+	h.bvhRoot = NewBVHNode(objs, 0, 0)
 }
 
 func (h *Hittables) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
+	if h.bvhRoot != nil {
+		return h.bvhRoot.Hit(r, tmin, tmax, hr)
+	}
+
 	var (
 		hit     = false
 		closest = tmax
