@@ -46,5 +46,5 @@ go run ./... > <output file> # use --help for all arguments
 Build:
 
 ``` shell
-go build -o go-rt-cli -pgo default.pgo ./...
+go build -o go-rt-cli -pgo {linux-x86}.pgo ./...
 ```
