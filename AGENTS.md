@@ -46,6 +46,68 @@ go run ./... -width 400 -height 225 -samples 100 -depth 50 -jobs 8 -o out.ppm
 
 # Profile
 go run ./... -cpuprofile cpu.prof -o /dev/null
+
+## PGO profiles and GOOS/GOARCH
+
+PGO profiles are platform-specific and named by target OS/architecture:
+
+- `linux-amd64.pgo`
+- `darwin-arm64.pgo`
+
+**Guidelines:**
+
+- Use the profile that matches your build target (`GOOS`, `GOARCH`).
+- If no matching profile exists, build without `-pgo`.
+
+### Examples
+
+```bash
+# Linux / amd64
+GOOS=linux GOARCH=amd64 go build \
+  -pgo linux-amd64.pgo \
+  -o build/rt-linux-amd64 \
+  ./...
+
+# macOS / arm64 (Apple Silicon)
+GOOS=darwin GOARCH=arm64 go build \
+  -pgo darwin-arm64.pgo \
+  -o build/rt-darwin-arm64 \
+  ./...
+
+# If there is no profile for the target, skip -pgo
+GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
+```
+
+## PGO profiles and GOOS/GOARCH
+
+PGO profiles are platform-specific and named by target OS/architecture:
+
+- `linux-amd64.pgo`
+- `darwin-arm64.pgo`
+
+**Guidelines:**
+
+- Use the profile that matches your build target (`GOOS`, `GOARCH`).
+- If no matching profile exists, build without `-pgo`.
+
+### Examples
+
+```bash
+# Linux / amd64
+GOOS=linux GOARCH=amd64 go build \
+  -pgo linux-amd64.pgo \
+  -o build/rt-linux-amd64 \
+  ./...
+
+# macOS / arm64 (Apple Silicon)
+GOOS=darwin GOARCH=arm64 go build \
+  -pgo darwin-arm64.pgo \
+  -o build/rt-darwin-arm64 \
+  ./...
+
+# If there is no profile for the target, skip -pgo
+GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
+```
 ```
 
 ## Directories

@@ -54,3 +54,29 @@ Build (with PGO):
 ``` shell
 go build -o build/rt -pgo linux-amd64.pgo ./...
 ```
+
+### Platform-specific PGO profiles
+
+This project uses platform-specific PGO profiles named by target `GOOS`/`GOARCH`:
+
+- `linux-amd64.pgo`
+- `darwin-arm64.pgo`
+
+When building for a specific target, pick the matching profile:
+
+``` shell
+# Native build (Linux/amd64 example)
+GOOS=linux GOARCH=amd64 go build \
+  -pgo linux-amd64.pgo \
+  -o build/rt-linux-amd64 \
+  ./...
+
+# Native build (macOS/arm64 example)
+GOOS=darwin GOARCH=arm64 go build \
+  -pgo darwin-arm64.pgo \
+  -o build/rt-darwin-arm64 \
+  ./...
+
+# If a matching profile is not available, build without -pgo
+GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
+```
