@@ -77,5 +77,8 @@ go.work
 *.prof
 benchmark.txt
 
+# Build artifacts
+build/
+
 # AI
 .serena/

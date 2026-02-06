@@ -38,7 +38,7 @@ golangci-lint run
 gofmt -w .
 
 # Build (with PGO)
-go build -pgo default.pgo -o go-rt-cli ./...
+go build -pgo linux-x86.pgo -o build/rt ./...
 
 # Run
 go run ./... -o output.ppm
@@ -47,6 +47,11 @@ go run ./... -width 400 -height 225 -samples 100 -depth 50 -jobs 8 -o out.ppm
 # Profile
 go run ./... -cpuprofile cpu.prof -o /dev/null
 ```
+
+## Directories
+
+- `build/` — build output (gitignored)
+- `tmp/` — temporary intermediate artifacts: benchmark results, profiling data, test builds, plans, etc. (gitignored, contents excluded except `.gitignore`)
 
 ## Task Completion
 
@@ -67,4 +72,4 @@ After any code change, run:
 - Table-driven tests, benchmarks in `benchmark_test.go`
 - Iterator-based rendering with `iter.Seq[RGB]`
 - `ParallelMap[I, O]` for concurrent work distribution
-- PGO profile: `default.pgo`
+- PGO profile: `linux-x86.pgo`

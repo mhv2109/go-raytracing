@@ -25,102 +25,38 @@ func (v Vec3) Neg() Vec3 {
 	return Vec3{-v.X, -v.Y, -v.Z}
 }
 
-func (v Vec3) Add(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.add(o)
-	for _, o := range others {
-		res = res.add(o)
-	}
-	return
-}
-
-func (v Vec3) add(o Vec3) Vec3 {
+func (v Vec3) Add(o Vec3) Vec3 {
 	return Vec3{v.X + o.X, v.Y + o.Y, v.Z + o.Z}
 }
 
-func (v Vec3) AddS(t float64, others ...float64) (res Vec3) {
-	res = v.addS(t)
-	for _, o := range others {
-		res = res.addS(o)
-	}
-	return
-}
-
-func (v Vec3) addS(t float64) Vec3 {
+func (v Vec3) AddS(t float64) Vec3 {
 	return Vec3{v.X + t, v.Y + t, v.Z + t}
 }
 
-func (v Vec3) Sub(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.sub(o)
-	for _, o := range others {
-		res = res.sub(o)
-	}
-	return
-}
-
-func (v Vec3) sub(o Vec3) Vec3 {
+func (v Vec3) Sub(o Vec3) Vec3 {
 	return Vec3{v.X - o.X, v.Y - o.Y, v.Z - o.Z}
 }
 
-func (v Vec3) SubS(t float64, others ...float64) (res Vec3) {
-	res = v.subS(t)
-	for _, o := range others {
-		res = res.subS(o)
-	}
-	return
-}
-
-func (v Vec3) subS(t float64) Vec3 {
+func (v Vec3) SubS(t float64) Vec3 {
 	return Vec3{v.X - t, v.Y - t, v.Z - t}
 }
 
-func (v Vec3) MulS(t float64, others ...float64) (res Vec3) {
-	res = v.mulS(t)
-	for _, o := range others {
-		res = res.mulS(o)
-	}
-	return
-}
-
-func (v Vec3) mulS(t float64) Vec3 {
+func (v Vec3) MulS(t float64) Vec3 {
 	return Vec3{v.X * t, v.Y * t, v.Z * t}
 }
 
-func (v Vec3) Mul(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.mul(o)
-	for _, o := range others {
-		res = res.mul(o)
-	}
-	return
-}
-
-func (v Vec3) mul(o Vec3) Vec3 {
+func (v Vec3) Mul(o Vec3) Vec3 {
 	return Vec3{v.X * o.X, v.Y * o.Y, v.Z * o.Z}
 }
 
-func (v Vec3) DivS(t float64, others ...float64) (res Vec3) {
-	res = v.divS(t)
-	for _, o := range others {
-		res = res.divS(o)
-	}
-	return
-}
-
-func (v Vec3) divS(t float64) Vec3 {
+func (v Vec3) DivS(t float64) Vec3 {
 	if t == 0 {
 		panic("Vec3.DivS: division by zero")
 	}
 	return Vec3{v.X / t, v.Y / t, v.Z / t}
 }
 
-func (v Vec3) Div(o Vec3, others ...Vec3) (res Vec3) {
-	res = v.div(o)
-	for _, o := range others {
-		res = res.div(o)
-	}
-	return
-}
-
-func (v Vec3) div(o Vec3) Vec3 {
+func (v Vec3) Div(o Vec3) Vec3 {
 	if o.X == 0 || o.Y == 0 || o.Z == 0 {
 		panic("Vec3.Div: division by zero")
 	}
@@ -152,8 +88,7 @@ func (v Vec3) Cross(o Vec3) Vec3 {
 }
 
 func (v Vec3) Unit() Vec3 {
-	l := v.Len()
-	return v.DivS(l)
+	return v.MulS(1 / v.Len())
 }
 
 func (v Vec3) NearZero() bool {

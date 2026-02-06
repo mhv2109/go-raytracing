@@ -111,7 +111,9 @@ func (d Dielectric) Scatter(r Ray, hr HitRecord, att *Color, scatt *Ray) (ok boo
 func (d Dielectric) reflectance(cos, ratio float64) (refl float64) {
 	r0 := (1 - ratio) / (1 + ratio)
 	r0 = r0 * r0
-	refl = r0 + (1-r0)*math.Pow((1-cos), 5)
+	x := 1 - cos
+	x2 := x * x
+	refl = r0 + (1-r0)*x2*x2*x
 	return
 }
 
@@ -172,7 +174,7 @@ func (d Diffusion) diffuse(hr HitRecord) (vec Vec3) {
 }
 
 func reflect(v, n Vec3) Vec3 {
-	return v.Sub(n.MulS(2).MulS(v.Dot(n)))
+	return v.Sub(n.MulS(2 * v.Dot(n)))
 }
 
 func refract(uv, n Vec3, eta float64) Vec3 {

@@ -50,7 +50,7 @@ func diffusionMaterial() DiffusionOpt {
 	return WithDiffusionType(Lambertian)
 }
 
-func randomScene() Hittables {
+func randomScene() *Hittables {
 	world := NewHittables()
 
 	// earth/ground/floor
@@ -120,7 +120,7 @@ func randomScene() Hittables {
 		}
 	}
 
-	return world
+	return &world
 }
 
 func newCamera() Camera {

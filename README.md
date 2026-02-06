@@ -29,6 +29,12 @@ devcontainer exec --workspace-folder ${PROJECT_ROOT} /bin/bash
 
 You can then run Test, Run, and Build commands.
 
+## Project Layout
+
+- `build/` — build output (gitignored)
+- `tmp/` — temporary intermediate artifacts: benchmark results, profiling data, test builds, plans, etc. (gitignored)
+- `*.pgo` — platform-specific PGO profiles (e.g. `linux-x86.pgo`)
+
 ## Test, Run, and Build
 
 Test:
@@ -43,8 +49,8 @@ Run:
 go run ./... > <output file> # use --help for all arguments
 ```
 
-Build:
+Build (with PGO):
 
 ``` shell
-go build -o go-rt-cli -pgo default.pgo ./...
+go build -o build/rt -pgo linux-x86.pgo ./...
 ```

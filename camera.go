@@ -32,7 +32,7 @@ func NewCamera(width, height, samples, depth, jobs int, lookfrom, lookat Point3,
 		origin = lookfrom
 		horiz  = u.MulS(viewWidth).MulS(focusDist)
 		vert   = v.MulS(viewHeight).MulS(focusDist)
-		llc    = origin.Sub(horiz.DivS(2), vert.DivS(2), w.MulS(focusDist))
+		llc    = origin.Sub(horiz.DivS(2)).Sub(vert.DivS(2)).Sub(w.MulS(focusDist))
 	)
 	return Camera{width, height, samples, depth, jobs, aperture / 2, origin, llc, horiz, vert, u, v, w}
 }
@@ -56,14 +56,14 @@ func (cam Camera) ray(s, t float64) Ray {
 	)
 	return Ray{
 		cam.origin.Add(offset),
-		cam.lowerLeftCorner.Add(cam.horiz.MulS(s), cam.vert.MulS(t)).Sub(cam.origin, offset),
+		cam.lowerLeftCorner.Add(cam.horiz.MulS(s)).Add(cam.vert.MulS(t)).Sub(cam.origin).Sub(offset),
 	}
 }
 
 // rayColor calculates the Color along the Ray. We define objects + colors here,
 // and return an object's color if the Ray intersects it. Otherwise, we return
 // the background color
-func (cam Camera) rayColor(r Ray, world Hittables) Color {
+func (cam Camera) rayColor(r Ray, world *Hittables) Color {
 	var (
 		mult  = Vec3{1, 1, 1}
 		hr    HitRecord
@@ -111,7 +111,7 @@ func (cam Camera) coords() iter.Seq[Coords] {
 	}
 }
 
-func (cam Camera) renderPixel(world Hittables, coords Coords) RGB {
+func (cam Camera) renderPixel(world *Hittables, coords Coords) RGB {
 	var (
 		u, v  float64
 		pixel = Color{0, 0, 0}
@@ -130,7 +130,7 @@ func (cam Camera) renderPixel(world Hittables, coords Coords) RGB {
 	return pixel.RGB(float64(cam.samples))
 }
 
-func (cam Camera) Render(world Hittables) iter.Seq[RGB] {
+func (cam Camera) Render(world *Hittables) iter.Seq[RGB] {
 	return func(yield func(RGB) bool) {
 		for rgb := range ParallelMap(cam.coords(), func(coords Coords) RGB { return cam.renderPixel(world, coords) }, cam.jobs) {
 			if !yield(rgb) {
