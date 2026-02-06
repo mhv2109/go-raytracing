@@ -29,53 +29,29 @@ Single-package CLI ray tracer outputting PPM images.
 
 ```bash
 # Test
-go test ./...
+make test
 
-# Lint
-golangci-lint run
+# Lint (with autofix)
+make lint
 
 # Format
 gofmt -w .
 
+# Benchmark
+make bench
+
 # Build (with PGO)
-go build -pgo linux-amd64.pgo -o build/rt ./...
+make build
 
-# Run
-go run ./... -o output.ppm
-go run ./... -width 400 -height 225 -samples 100 -depth 50 -jobs 8 -o out.ppm
+# Run (using built binary)
+./build/$(go env GOOS)/$(go env GOARCH)/rt -o output.ppm
+./build/$(go env GOOS)/$(go env GOARCH)/rt -width 400 -height 225 -samples 100 -depth 50 -jobs 8 -output out.ppm
 
-# Profile
-go run ./... -cpuprofile cpu.prof -o /dev/null
+# Profile (generate PGO profile)
+make profile
 
-## PGO profiles and GOOS/GOARCH
-
-PGO profiles are platform-specific and named by target OS/architecture:
-
-- `linux-amd64.pgo`
-- `darwin-arm64.pgo`
-
-**Guidelines:**
-
-- Use the profile that matches your build target (`GOOS`, `GOARCH`).
-- If no matching profile exists, build without `-pgo`.
-
-### Examples
-
-```bash
-# Linux / amd64
-GOOS=linux GOARCH=amd64 go build \
-  -pgo linux-amd64.pgo \
-  -o build/rt-linux-amd64 \
-  ./...
-
-# macOS / arm64 (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build \
-  -pgo darwin-arm64.pgo \
-  -o build/rt-darwin-arm64 \
-  ./...
-
-# If there is no profile for the target, skip -pgo
-GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
+# All-in-one: lint, test, profile, build
+make
 ```
 
 ## PGO profiles and GOOS/GOARCH
@@ -88,27 +64,20 @@ PGO profiles are platform-specific and named by target OS/architecture:
 **Guidelines:**
 
 - Use the profile that matches your build target (`GOOS`, `GOARCH`).
-- If no matching profile exists, build without `-pgo`.
+- If no matching profile exists, build without `-pgo` by omitting `make profile` or adjusting the Makefile.
 
 ### Examples
 
 ```bash
 # Linux / amd64
-GOOS=linux GOARCH=amd64 go build \
-  -pgo linux-amd64.pgo \
-  -o build/rt-linux-amd64 \
-  ./...
+GOOS=linux GOARCH=amd64 make build
 
 # macOS / arm64 (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build \
-  -pgo darwin-arm64.pgo \
-  -o build/rt-darwin-arm64 \
-  ./...
+GOOS=darwin GOARCH=arm64 make build
 
-# If there is no profile for the target, skip -pgo
-GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
-```
-```
+# If there is no profile for the target, skip the profile step and just build
+GOOS=linux GOARCH=amd64 GOFLAGS=-pgo=none make build
+``````
 
 ## Directories
 

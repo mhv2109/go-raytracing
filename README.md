@@ -37,46 +37,55 @@ You can then run Test, Run, and Build commands.
 
 ## Test, Run, and Build
 
-Test:
+This project uses a `Makefile` to streamline common tasks.
+
+### Test
 
 ``` shell
-go test ./...
+make test
 ```
 
-Run:
+### Lint
 
 ``` shell
-go run ./... > <output file> # use --help for all arguments
+make lint
 ```
 
-Build (with PGO):
+### Benchmark
 
 ``` shell
-go build -o build/rt -pgo linux-amd64.pgo ./...
+make bench
 ```
 
-### Platform-specific PGO profiles
+### Build (with PGO)
 
-This project uses platform-specific PGO profiles named by target `GOOS`/`GOARCH`:
-
-- `linux-amd64.pgo`
-- `darwin-arm64.pgo`
-
-When building for a specific target, pick the matching profile:
+By default, the build target uses a platform-specific PGO profile named
+`$(GOOS)-$(GOARCH).pgo` and outputs a binary to `build/$(GOOS)/$(GOARCH)/rt`.
 
 ``` shell
-# Native build (Linux/amd64 example)
-GOOS=linux GOARCH=amd64 go build \
-  -pgo linux-amd64.pgo \
-  -o build/rt-linux-amd64 \
-  ./...
+make build
+```
 
-# Native build (macOS/arm64 example)
-GOOS=darwin GOARCH=arm64 go build \
-  -pgo darwin-arm64.pgo \
-  -o build/rt-darwin-arm64 \
-  ./...
+You can override `GOOS` and `GOARCH` as usual if you want to cross‑compile:
 
-# If a matching profile is not available, build without -pgo
-GOOS=linux GOARCH=amd64 go build -o build/rt-linux-amd64 ./...
+``` shell
+GOOS=linux GOARCH=amd64 make build
+GOOS=darwin GOARCH=arm64 make build
+```
+
+### Generate a PGO profile
+
+The `profile` target runs the renderer with a small image and writes a
+CPU profile named `$(GOOS)-$(GOARCH).pgo` in the project root:
+
+``` shell
+make profile
+```
+
+### All‑in‑one
+
+Run lint, tests, profile generation, and build in one go:
+
+``` shell
+make
 ```
