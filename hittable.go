@@ -34,6 +34,9 @@ func NewHitRecord(P Point3, N Vec3, T float64, M Material, r Ray) HitRecord {
 type Hittable interface {
 	// Hit checks if r interesects with Hittable. If so, it returns a HitRecord, nil otherwise.
 	Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool
+
+	// BoundingBox returns the axis-aligned bounding box enclosing the hittable.
+	BoundingBox() AABB
 }
 
 // Sphere is a shape defined by a Center point and a radius.
@@ -85,6 +88,14 @@ func (s Sphere) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {
 	return true
 }
 
+func (s Sphere) BoundingBox() AABB {
+	offset := Vec3{s.R, s.R, s.R}
+	return AABB{
+		Min: s.Center.Sub(offset),
+		Max: s.Center.Add(offset),
+	}
+}
+
 type Hittables struct {
 	Objects []Hittable
 }
@@ -104,6 +115,17 @@ func (h *Hittables) Clear() {
 		h.Objects[i] = nil
 	}
 	h.Objects = h.Objects[:0]
+}
+
+func (h *Hittables) BoundingBox() AABB {
+	if len(h.Objects) == 0 {
+		return AABB{}
+	}
+	box := h.Objects[0].BoundingBox()
+	for _, obj := range h.Objects[1:] {
+		box = SurroundingBox(box, obj.BoundingBox())
+	}
+	return box
 }
 
 func (h *Hittables) Hit(r Ray, tmin, tmax float64, hr *HitRecord) bool {

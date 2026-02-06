@@ -120,7 +120,10 @@ func randomScene() *Hittables {
 		}
 	}
 
-	return &world
+	// Build BVH from all objects for O(log n) intersection testing.
+	bvh := NewBVH(world.Objects)
+	result := NewHittables(bvh)
+	return &result
 }
 
 func newCamera() Camera {

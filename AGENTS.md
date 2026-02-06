@@ -38,7 +38,7 @@ golangci-lint run
 gofmt -w .
 
 # Build (with PGO)
-go build -pgo linux-x86.pgo -o build/rt ./...
+go build -pgo linux-amd64.pgo -o build/rt ./...
 
 # Run
 go run ./... -o output.ppm
@@ -72,4 +72,4 @@ After any code change, run:
 - Table-driven tests, benchmarks in `benchmark_test.go`
 - Iterator-based rendering with `iter.Seq[RGB]`
 - `ParallelMap[I, O]` for concurrent work distribution
-- PGO profile: `linux-x86.pgo`
+- PGO profile: `linux-amd64.pgo`

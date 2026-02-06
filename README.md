@@ -33,7 +33,7 @@ You can then run Test, Run, and Build commands.
 
 - `build/` — build output (gitignored)
 - `tmp/` — temporary intermediate artifacts: benchmark results, profiling data, test builds, plans, etc. (gitignored)
-- `*.pgo` — platform-specific PGO profiles (e.g. `linux-x86.pgo`)
+- `*.pgo` — platform-specific PGO profiles (e.g. `linux-amd64.pgo`)
 
 ## Test, Run, and Build
 
@@ -52,5 +52,5 @@ go run ./... > <output file> # use --help for all arguments
 Build (with PGO):
 
 ``` shell
-go build -o build/rt -pgo linux-x86.pgo ./...
+go build -o build/rt -pgo linux-amd64.pgo ./...
 ```
