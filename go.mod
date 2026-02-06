@@ -1,6 +1,6 @@
 module github.com/mhv2109/RayTracing
 
-go 1.24.0
+go 1.25.6
 
 require github.com/schollz/progressbar/v3 v3.18.0
 
